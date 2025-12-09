@@ -158,9 +158,8 @@ export default function LoginScreen() {
                   styles.demoAccount,
                   { backgroundColor: theme.backgroundDefault },
                 ]}
-                onPress={() => {
-                  setEmail(account.email);
-                  setPassword("demo123");
+                onPress={async () => {
+                  await signIn(account.email, "demo123");
                 }}
               >
                 <ThemedText type="small" style={{ fontWeight: "600" }}>

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, StyleSheet, Pressable, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -20,29 +20,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
-import { getPendingOrders } from "@/lib/storage";
+import { getPendingOrders, subscribeToDriverLocations } from "@/lib/storage";
 import { Order, Profile } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
-
-const DEMO_DRIVERS: Profile[] = [
-  {
-    id: "driver-001",
-    role: "driver",
-    full_name: "John Driver",
-    phone_number: "+1234567893",
-  },
-  {
-    id: "driver-002",
-    role: "driver",
-    full_name: "Sarah Smith",
-    phone_number: "+1234567894",
-  },
-];
-
-const DEMO_DRIVER_LOCATIONS = [
-  { lat: 40.73, lng: -73.99 },
-  { lat: 40.75, lng: -73.97 },
-];
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
@@ -51,6 +31,7 @@ export default function MapScreen() {
   const { theme } = useTheme();
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [drivers, setDrivers] = useState<Profile[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const loadOrders = async () => {
@@ -63,6 +44,22 @@ export default function MapScreen() {
       loadOrders();
     }, []),
   );
+
+  useEffect(() => {
+    const unsubscribe = subscribeToDriverLocations((updatedDrivers) => {
+      setDrivers(updatedDrivers);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const getDriverMarkerColor = (status?: string) => {
+    if (status === "available") return "#10B981";
+    if (status === "busy") return "#F97316";
+    return "#6B7280";
+  };
+
+  const availableDrivers = drivers.filter(d => d.driver_status === "available");
+  const busyDrivers = drivers.filter(d => d.driver_status === "busy");
 
   const handleAssignOrder = () => {
     if (selectedOrder) {
@@ -124,20 +121,22 @@ export default function MapScreen() {
             ) : null,
           )}
 
-          {DEMO_DRIVERS.map((driver, index) => (
-            <Marker
-              key={driver.id}
-              coordinate={{
-                latitude: DEMO_DRIVER_LOCATIONS[index].lat,
-                longitude: DEMO_DRIVER_LOCATIONS[index].lng,
-              }}
-              title={driver.full_name}
-            >
-              <View style={styles.driverMarker}>
-                <Truck size={20} color="#10B981" />
-              </View>
-            </Marker>
-          ))}
+          {drivers.map((driver) =>
+            driver.current_location ? (
+              <Marker
+                key={driver.id}
+                coordinate={{
+                  latitude: driver.current_location.lat,
+                  longitude: driver.current_location.lng,
+                }}
+                title={driver.full_name || "Driver"}
+              >
+                <View style={[styles.driverMarker, { backgroundColor: `${getDriverMarkerColor(driver.driver_status)}20` }]}>
+                  <Truck size={20} color={getDriverMarkerColor(driver.driver_status)} />
+                </View>
+              </Marker>
+            ) : null
+          )}
         </MapView>
       )}
 
@@ -157,7 +156,11 @@ export default function MapScreen() {
         </View>
         <View style={styles.legendRow}>
           <View style={[styles.legendDot, { backgroundColor: "#10B981" }]} />
-          <ThemedText type="caption">Available Drivers ({DEMO_DRIVERS.length})</ThemedText>
+          <ThemedText type="caption">Available Drivers ({availableDrivers.length})</ThemedText>
+        </View>
+        <View style={styles.legendRow}>
+          <View style={[styles.legendDot, { backgroundColor: "#F97316" }]} />
+          <ThemedText type="caption">Busy Drivers ({busyDrivers.length})</ThemedText>
         </View>
       </View>
 

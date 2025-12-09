@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   FlatList,
@@ -6,6 +6,7 @@ import {
   RefreshControl,
   Pressable,
   Alert,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -19,8 +20,10 @@ import {
   Package,
   CheckCircle,
   Navigation,
+  Radio,
 } from "lucide-react-native";
 import * as Linking from "expo-linking";
+import * as Location from "expo-location";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -28,8 +31,15 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { getOrdersByDriver, updateOrderStatus, seedDemoOrders } from "@/lib/storage";
-import { Order, OrderStatus } from "@/lib/types";
+import { 
+  getOrdersByDriver, 
+  updateOrderStatus, 
+  seedDemoOrders,
+  updateDriverLocation,
+  updateDriverStatus,
+  notifyDriverLocationUpdate,
+} from "@/lib/storage";
+import { Order, OrderStatus, DriverStatus } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 export default function MyTasksScreen() {
@@ -44,6 +54,9 @@ export default function MyTasksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"active" | "completed">("active");
+  const [isOnline, setIsOnline] = useState(false);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const onlineIntentRef = useRef<boolean>(false);
 
   const loadOrders = async () => {
     if (!user) return;
@@ -63,6 +76,78 @@ export default function MyTasksScreen() {
       loadOrders();
     }, [user]),
   );
+
+  const stopLocationTracking = () => {
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+      locationSubscription.current = null;
+    }
+  };
+
+  const handleToggleOnline = async (value: boolean) => {
+    if (!user) return;
+    
+    onlineIntentRef.current = value;
+    
+    if (!value) {
+      stopLocationTracking();
+      setIsOnline(false);
+      await updateDriverStatus(user.id, "offline");
+      await notifyDriverLocationUpdate();
+      return;
+    }
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (!onlineIntentRef.current) return;
+    
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Location permission is required to go online");
+      setIsOnline(false);
+      return;
+    }
+
+    try {
+      const subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 10000,
+          distanceInterval: 50,
+        },
+        (location) => {
+          if (user && onlineIntentRef.current) {
+            updateDriverLocation(user.id, {
+              lat: location.coords.latitude,
+              lng: location.coords.longitude,
+            }).then(() => notifyDriverLocationUpdate());
+          }
+        }
+      );
+      
+      if (!onlineIntentRef.current) {
+        subscription.remove();
+        return;
+      }
+      
+      locationSubscription.current = subscription;
+      setIsOnline(true);
+      
+      await updateDriverStatus(user.id, "available");
+      if (!onlineIntentRef.current) return;
+      
+      await notifyDriverLocationUpdate();
+    } catch (error) {
+      console.error("Failed to start location tracking:", error);
+      stopLocationTracking();
+      setIsOnline(false);
+      Alert.alert("Error", "Failed to start location tracking");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopLocationTracking();
+    };
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -229,6 +314,21 @@ export default function MyTasksScreen() {
           { paddingTop: headerHeight + Spacing.lg, backgroundColor: theme.backgroundRoot },
         ]}
       >
+        <View style={[styles.onlineToggleContainer, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={styles.onlineToggleLeft}>
+            <Radio size={20} color={isOnline ? "#10B981" : theme.textSecondary} />
+            <ThemedText type="body" style={{ marginLeft: Spacing.sm, fontWeight: "600" }}>
+              {isOnline ? "Online" : "Offline"}
+            </ThemedText>
+          </View>
+          <Switch
+            value={isOnline}
+            onValueChange={handleToggleOnline}
+            trackColor={{ false: theme.border, true: "#10B98150" }}
+            thumbColor={isOnline ? "#10B981" : theme.textSecondary}
+          />
+        </View>
+
         <View style={[styles.filterTabs, { backgroundColor: theme.backgroundDefault }]}>
           <Pressable
             style={[
@@ -294,6 +394,18 @@ const styles = StyleSheet.create({
   filterContainer: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
+  },
+  onlineToggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.md,
+  },
+  onlineToggleLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   filterTabs: {
     flexDirection: "row",

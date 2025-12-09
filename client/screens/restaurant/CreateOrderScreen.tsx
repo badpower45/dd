@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { X, Check } from "lucide-react-native";
+import * as Location from "expo-location";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
@@ -18,7 +19,23 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { createOrder } from "@/lib/storage";
+import { CustomerGeo } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
+
+const CAIRO_FALLBACK: CustomerGeo = { lat: 30.0444, lng: 31.2357 };
+
+const geocodeAddress = async (address: string): Promise<CustomerGeo> => {
+  try {
+    const results = await Location.geocodeAsync(address);
+    if (results && results.length > 0) {
+      return { lat: results[0].latitude, lng: results[0].longitude };
+    }
+    return CAIRO_FALLBACK;
+  } catch (error) {
+    console.log("Geocoding failed, using fallback:", error);
+    return CAIRO_FALLBACK;
+  }
+};
 
 export default function CreateOrderScreen() {
   const insets = useSafeAreaInsets();
@@ -50,10 +67,12 @@ export default function CreateOrderScreen() {
 
     setIsSubmitting(true);
     try {
+      const customerGeo = await geocodeAddress(customerAddress.trim());
       await createOrder(
         {
           customer_name: customerName.trim(),
           customer_address: customerAddress.trim(),
+          customer_geo: customerGeo,
           phone_primary: phonePrimary.trim(),
           phone_secondary: phoneSecondary.trim() || undefined,
           collection_amount: parseFloat(collectionAmount) || 0,
