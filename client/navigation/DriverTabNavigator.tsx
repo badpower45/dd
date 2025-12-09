@@ -1,25 +1,29 @@
 import React from "react";
+import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet } from "react-native";
-import HomeStackNavigator from "@/navigation/HomeStackNavigator";
-import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
-import { useTheme } from "@/hooks/useTheme";
+import { Platform } from "react-native";
 
-export type MainTabParamList = {
-  HomeTab: undefined;
+import MyTasksScreen from "@/screens/driver/MyTasksScreen";
+import WalletScreen from "@/screens/driver/WalletScreen";
+import ProfileScreen from "@/screens/ProfileScreen";
+import { useTheme } from "@/hooks/useTheme";
+import { HeaderTitle } from "@/components/HeaderTitle";
+
+export type DriverTabParamList = {
+  TasksTab: undefined;
+  WalletTab: undefined;
   ProfileTab: undefined;
 };
 
-const Tab = createBottomTabNavigator<MainTabParamList>();
+const Tab = createBottomTabNavigator<DriverTabParamList>();
 
-export default function MainTabNavigator() {
+export default function DriverNavigator() {
   const { theme, isDark } = useTheme();
 
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
       screenOptions={{
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
@@ -40,24 +44,40 @@ export default function MainTabNavigator() {
               style={StyleSheet.absoluteFill}
             />
           ) : null,
-        headerShown: false,
+        headerShown: true,
+        headerTransparent: true,
+        headerBlurEffect: isDark ? "dark" : "light",
+        headerTintColor: theme.text,
       }}
     >
       <Tab.Screen
-        name="HomeTab"
-        component={HomeStackNavigator}
+        name="TasksTab"
+        component={MyTasksScreen}
         options={{
-          title: "Home",
+          title: "Tasks",
+          headerTitle: () => <HeaderTitle title="DeliverEase" />,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="list" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="WalletTab"
+        component={WalletScreen}
+        options={{
+          title: "Wallet",
+          headerTitle: "My Wallet",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="credit-card" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen
         name="ProfileTab"
-        component={ProfileStackNavigator}
+        component={ProfileScreen}
         options={{
           title: "Profile",
+          headerTitle: "Profile",
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),
