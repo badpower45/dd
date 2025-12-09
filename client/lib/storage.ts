@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Order, CreateOrderInput, OrderStatus } from "@/lib/types";
+import { Order, CreateOrderInput, OrderStatus, Profile, CustomerGeo, DriverStatus } from "@/lib/types";
 
 const ORDERS_STORAGE_KEY = "@deliverease_orders";
+const DRIVERS_STORAGE_KEY = "@deliverease_drivers";
 
 const generateId = (): string => {
   return `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -177,4 +178,104 @@ export const seedDemoOrders = async (restaurantId: string): Promise<void> => {
   ];
 
   await saveOrders(demoOrders);
+};
+
+export const getDrivers = async (): Promise<Profile[]> => {
+  try {
+    const stored = await AsyncStorage.getItem(DRIVERS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    return getDefaultDrivers();
+  } catch (error) {
+    console.error("Error loading drivers:", error);
+    return getDefaultDrivers();
+  }
+};
+
+const getDefaultDrivers = (): Profile[] => [
+  {
+    id: "driver-001",
+    role: "driver",
+    full_name: "John Driver",
+    phone_number: "+1234567893",
+    email: "driver@demo.com",
+    current_location: { lat: 40.73, lng: -73.99 },
+    driver_status: "offline",
+  },
+  {
+    id: "driver-002",
+    role: "driver",
+    full_name: "Sarah Smith",
+    phone_number: "+1234567894",
+    email: "driver2@demo.com",
+    current_location: { lat: 40.75, lng: -73.97 },
+    driver_status: "offline",
+  },
+];
+
+export const saveDrivers = async (drivers: Profile[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(drivers));
+  } catch (error) {
+    console.error("Error saving drivers:", error);
+  }
+};
+
+export const updateDriverLocation = async (
+  driverId: string,
+  location: CustomerGeo,
+): Promise<void> => {
+  const drivers = await getDrivers();
+  const index = drivers.findIndex((d) => d.id === driverId);
+  
+  if (index !== -1) {
+    drivers[index].current_location = location;
+    await saveDrivers(drivers);
+  } else {
+    drivers.push({
+      id: driverId,
+      role: "driver",
+      full_name: "Driver",
+      phone_number: "",
+      current_location: location,
+      driver_status: "available",
+    });
+    await saveDrivers(drivers);
+  }
+};
+
+export const updateDriverStatus = async (
+  driverId: string,
+  status: DriverStatus,
+): Promise<void> => {
+  const drivers = await getDrivers();
+  const index = drivers.findIndex((d) => d.id === driverId);
+  
+  if (index !== -1) {
+    drivers[index].driver_status = status;
+    await saveDrivers(drivers);
+  }
+};
+
+export const getAvailableDrivers = async (): Promise<Profile[]> => {
+  const drivers = await getDrivers();
+  return drivers.filter((d) => d.driver_status === "available");
+};
+
+let driverLocationListeners: ((drivers: Profile[]) => void)[] = [];
+
+export const subscribeToDriverLocations = (
+  callback: (drivers: Profile[]) => void
+): (() => void) => {
+  driverLocationListeners.push(callback);
+  getDrivers().then(callback);
+  return () => {
+    driverLocationListeners = driverLocationListeners.filter((cb) => cb !== callback);
+  };
+};
+
+export const notifyDriverLocationUpdate = async (): Promise<void> => {
+  const drivers = await getDrivers();
+  driverLocationListeners.forEach((cb) => cb(drivers));
 };

@@ -7,6 +7,8 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+export type DriverStatus = "available" | "busy" | "offline";
+
 export interface Profile {
   id: string;
   role: UserRole;
@@ -14,6 +16,8 @@ export interface Profile {
   phone_number: string;
   email?: string;
   created_at?: string;
+  current_location?: CustomerGeo | null;
+  driver_status?: DriverStatus;
 }
 
 export interface CustomerGeo {

@@ -1,0 +1,39 @@
+Act as a Senior React Native Engineer. We are moving to **Stage 2** of the development.
+The Goal: Activate the "Real-Time Logistics Engine" for the existing UI.
+
+**Do not delete existing screens.** Modify them to implement the following 3 critical features:
+
+### **Feature 1: Address Geocoding (Restaurant Side)**
+**Target File:** `client/screens/restaurant/CreateOrderScreen.tsx`
+**Requirement:**
+1.  When the Restaurant enters a text address (e.g., "Cairo Festival City"), use `expo-location` -> `Location.geocodeAsync(address)` to convert it into `{latitude, longitude}`.
+2.  Store these coordinates in the `customer_geo` column in the `orders` table when submitting the form.
+3.  **Fallback:** If geocoding fails, default to a placeholder location (e.g., city center) but allow the user to proceed.
+
+### **Feature 2: Driver Live Tracking (Driver Side)**
+**Target File:** `client/screens/driver/MyTasksScreen.tsx`
+**Requirement:**
+1.  Implement `Location.watchPositionAsync` from `expo-location`.
+2.  **Logic:**
+    * Start tracking ONLY when the driver status is 'Available' (you may need to add a toggle switch in the UI).
+    * Update interval: Every 10 seconds or every 50 meters.
+3.  **Database Sync:**
+    * On every location update, send an `UPDATE` query to the `profiles` table setting the `current_location` column (use PostGIS format if enabled, or simple JSONB `{lat, lng}` depending on current schema).
+    * *Optimization:* Do not await this call (fire and forget) to keep UI smooth.
+
+### **Feature 3: The Dispatcher "God View" (Dispatcher Side)**
+**Target File:** `client/screens/dispatcher/MapScreen.tsx`
+**Requirement:**
+1.  Connect the Map to **Supabase Realtime**.
+2.  **Channel Subscription:** Subscribe to `postgres_changes` on the `profiles` table.
+3.  **Visualization:**
+    * When a driver moves (row update), smoothly animate or update their marker on the map.
+    * Show different marker icons/colors for "Available" vs "Busy" drivers.
+4.  **Orders Layer:** Fetch "Pending" orders and display them as Pins on the map (using the `customer_geo` data from Feature 1).
+
+### **Technical Constraints:**
+* Ensure `expo-location` permissions are requested correctly on app launch.
+* Handle errors gracefully (e.g., if GPS is off).
+* Keep using `NativeWind` for any new UI elements (like the "Go Online" switch for drivers).
+
+**IMPLEMENT THESE FEATURES NOW.**
