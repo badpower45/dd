@@ -1,7 +1,10 @@
 import { Platform } from "react-native";
 
 const getBaseUrl = () => {
-    if (Platform.OS === "web") return "";
+    if (Platform.OS === "web") {
+        // Use absolute path for API calls on web
+        return window.location.origin;
+    }
     // For Android emulator use 10.0.2.2, for iOS simulator use localhost
     // If running on physical device, replace with your machine's local IP
     return Platform.OS === "android"
