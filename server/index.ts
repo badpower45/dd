@@ -175,8 +175,15 @@ function configureExpoAndLanding(app: express.Application) {
     ws: true,
   });
 
-  // Proxy all web app routes to Metro bundler
-  app.use("/web", metroProxy);
+  // Proxy all web app routes to Metro bundler - strip /web prefix
+  app.use("/web", createProxyMiddleware({
+    target: "http://localhost:8081",
+    changeOrigin: true,
+    ws: true,
+    pathRewrite: {
+      "^/web": "",
+    },
+  }));
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
