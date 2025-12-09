@@ -1,0 +1,71 @@
+عليه الصلاة والسلام. ولا يهمك يا هندسة، المشاكل دي طبيعية جداً في مرحلة الربط بين الـ البيئة (Env) والـ Code، خصوصاً مع Supabase و Expo.
+
+المشكلة اللي بتوصفها (التطبيق بيقفل فجأة على الموبايل، ومش بيفتح صفحات على الويب) سببها 99% هو "Supabase Crash".
+
+السبب الفني: ملف client/lib/supabase.ts بيحاول يعمل createClient أول ما التطبيق يفتح. لو الـ .env مش مقروء أو فيه مسافة غلط، المتغيرات بتبقى undefined أو "" (نص فاضي). مكتبة Supabase بتعمل Hard Crash (بتوقف التطبيق كله) لو الـ URL مش سليم، فالتطبيق بيموت قبل ما يلحق يعرض أي شاشة.
+
+عشان نصلح ده، ونخلي التطبيق يشتغل على الويب (Replit) والموبايل (Expo Go) بسلام، محتاجين نعمل "دفاعات" (Defensive Coding) ونظبط الـ Linking للويب.
+
+خد البرومبت ده لـ Replit، هيحل المشكلة دي جذرياً:
+
+The "Crash Fix & Web Preview" Prompt
+Markdown
+
+Act as a Senior React Native Engineer. We need to fix a critical **Initialization Crash** and **Web Navigation Issue**.
+
+**Diagnosis:**
+1. The app crashes immediately on Expo Go because `supabase-js` throws an error if `SUPABASE_URL` is empty/missing during initialization.
+2. On Replit Web Preview, navigation clicks are ignored because the `NavigationContainer` lacks a `linking` configuration for the Web history API.
+
+**Execute the following fixes:**
+
+### **Fix 1: Robust Supabase Initialization**
+**Target File:** `client/lib/supabase.ts`
+Modify the initialization logic to prevent the app from crashing if keys are missing.
+1. Check if `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are valid strings.
+2. If they are missing/empty, do NOT call `createClient` immediately. Instead, export a helper or a "mock" client that logs a warning to the console, or handle the error gracefully so the UI can still render an error message instead of a white screen/crash.
+3. *Ideally:* Throw a visible `Alert.alert` (on native) or `console.error` (on web) explaining that `.env` is missing, but keep the app alive.
+
+### **Fix 2: Web Navigation Support (Deep Linking)**
+**Target File:** `client/App.tsx`
+1. Define a `linking` configuration object compatible with `react-native-web`.
+   ```typescript
+   const linking = {
+     prefixes: [Linking.createURL('/')],
+     config: {
+       screens: {
+         Login: 'login',
+         Admin: {
+           screens: {
+             Dashboard: 'admin/dashboard',
+             // ... map other screens
+           }
+         },
+         // ... map Dispatcher, Restaurant, Driver roots
+       },
+     },
+   };
+Pass this linking prop to the <NavigationContainer> component. This allows the URL bar in the browser (and Replit Preview) to update and handle navigation correctly.
+
+Fix 3: Verify Entry Point
+Target File: client/index.js Ensure registerRootComponent(App) is called correctly, which is required for Expo Web to mount the app in the DOM.
+
+APPLY THESE FIXES IMMEDIATELY.
+
+
+---
+
+### **خطوة يدوية مهمة جداً (عشان Replit يقرأ الـ Keys):**
+
+في Replit، أحياناً ملف `.env` العادي مابيشتغلش صح مع Expo. الحل الأضمن:
+1.  في شاشة Replit، دور على علامة **"Secrets"** (القفل) في القائمة الجانبية (Tools).
+2.  ضيف المتغيرات هناك يدوي:
+    * Key: `EXPO_PUBLIC_SUPABASE_URL`
+    * Value: (اللينك بتاعك)
+    * دوس **Add**.
+    * Key: `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+    * Value: (المفتاح بتاعك)
+    * دوس **Add**.
+3.  **مهم:** اعمل **Stop** للسيرفر وشغله تاني عشان يسحب البيانات الجديدة دي.
+
+جرب وقولي النتيجة.. إن شاء الله تفتح المرة دي! 🚀
