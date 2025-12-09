@@ -46,7 +46,6 @@ export default function DriverNavigator() {
           ) : null,
         headerShown: true,
         headerTransparent: true,
-        headerBlurEffect: isDark ? "dark" : "light",
         headerTintColor: theme.text,
       }}
     >

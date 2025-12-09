@@ -1,20 +1,68 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
-  id: varchar("id")
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  role: text("role", { enum: ["admin", "dispatcher", "restaurant", "driver"] }).notNull(),
+  fullName: text("full_name").notNull(),
+  phoneNumber: text("phone_number"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  deliveryAddress: text("delivery_address").notNull(),
+  deliveryLat: text("delivery_lat"),
+  deliveryLng: text("delivery_lng"),
+  restaurantId: integer("restaurant_id").notNull(),
+  driverId: integer("driver_id"),
+  status: text("status", {
+    enum: ["pending", "assigned", "picked_up", "delivered", "cancelled"],
+  }).default("pending").notNull(),
+  collectionAmount: integer("collection_amount").notNull(),
+  deliveryFee: integer("delivery_fee").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export const usersRelations = relations(users, ({ many }) => ({
+  ordersAsRestaurant: many(orders, { relationName: "restaurantOrders" }),
+  ordersAsDriver: many(orders, { relationName: "driverOrders" }),
+}));
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  restaurant: one(users, {
+    fields: [orders.restaurantId],
+    references: [users.id],
+    relationName: "restaurantOrders",
+  }),
+  driver: one(users, {
+    fields: [orders.driverId],
+    references: [users.id],
+    relationName: "driverOrders",
+  }),
+}));
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+

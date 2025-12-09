@@ -41,10 +41,11 @@ function getDeploymentUrl() {
     return url;
   }
 
-  console.error(
-    "ERROR: REPLIT_INTERNAL_APP_DOMAIN and REPLIT_DEV_DOMAIN not set",
-  );
-  process.exit(1);
+  // Fallback for local development
+  const port = process.env.PORT || 5000;
+  const url = `http://localhost:${port}`;
+  console.log("Using local domain:", url);
+  return url;
 }
 
 function prepareDirectories(timestamp) {
@@ -104,6 +105,7 @@ async function startMetro() {
   console.log("Starting Metro...");
   metroProcess = spawn("npm", ["run", "expo:start:static:build"], {
     stdio: ["ignore", "pipe", "pipe"],
+    shell: true,
     detached: false,
   });
 
@@ -497,7 +499,7 @@ async function main() {
       reject(
         new Error(
           `Overall download timeout after ${downloadTimeout / 1000} seconds. ` +
-            "Metro may be struggling to generate bundles. Check Metro logs above.",
+          "Metro may be struggling to generate bundles. Check Metro logs above.",
         ),
       );
     }, downloadTimeout);

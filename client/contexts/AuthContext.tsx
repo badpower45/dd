@@ -135,19 +135,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return true;
         }
       } else {
-        const demoUser = DEMO_USERS[email.toLowerCase()];
-        if (demoUser && demoUser.password === password) {
-          await AsyncStorage.setItem(
-            AUTH_STORAGE_KEY,
-            JSON.stringify(demoUser.profile),
-          );
-          setUser(demoUser.profile);
+        // Use local API
+        try {
+          const { api } = await import("@/lib/api");
+          const user = await api.auth.login({ email, password });
+
+          // Map backend User to frontend Profile
+          const profile: Profile = {
+            id: user.id.toString(),
+            role: user.role,
+            full_name: user.fullName,
+            phone_number: user.phoneNumber,
+            email: user.email,
+            created_at: user.createdAt,
+          };
+
+          await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+          setUser(profile);
           return true;
-        } else {
-          Alert.alert(
-            "Sign In Error",
-            "Invalid credentials. Try demo accounts:\n\nadmin@demo.com\ndispatcher@demo.com\nrestaurant@demo.com\ndriver@demo.com\n\nPassword: demo123",
-          );
+        } catch (err: any) {
+          Alert.alert("Sign In Error", err.message || "Invalid credentials");
           return false;
         }
       }
@@ -160,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   };
+
 
   const signOut = async () => {
     try {

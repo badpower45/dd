@@ -56,7 +56,6 @@ function DispatcherTabs() {
           ) : null,
         headerShown: true,
         headerTransparent: true,
-        headerBlurEffect: isDark ? "dark" : "light",
         headerTintColor: theme.text,
       }}
     >

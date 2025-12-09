@@ -48,7 +48,6 @@ export default function AdminNavigator() {
           ) : null,
         headerShown: true,
         headerTransparent: true,
-        headerBlurEffect: isDark ? "dark" : "light",
         headerTintColor: theme.text,
       }}
     >
