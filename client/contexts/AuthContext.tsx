@@ -108,6 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
 
+      // Always use demo users for easy preview (no database required)
+      const demoUser = DEMO_USERS[email.toLowerCase()];
+      if (demoUser && demoUser.password === password) {
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(demoUser.profile));
+        setUser(demoUser.profile);
+        return true;
+      }
+
+      // If not a demo user and Supabase is configured, try Supabase auth
       if (isSupabaseConfigured()) {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -134,31 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(profile as Profile);
           return true;
         }
-      } else {
-        // Use local API
-        try {
-          const { api } = await import("@/lib/api");
-          const user = await api.auth.login({ email, password });
-
-          // Map backend User to frontend Profile
-          const profile: Profile = {
-            id: user.id.toString(),
-            role: user.role,
-            full_name: user.fullName,
-            phone_number: user.phoneNumber,
-            email: user.email,
-            created_at: user.createdAt,
-          };
-
-          await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
-          setUser(profile);
-          return true;
-        } catch (err: any) {
-          Alert.alert("Sign In Error", err.message || "Invalid credentials");
-          return false;
-        }
       }
 
+      // Invalid credentials for demo users
+      Alert.alert("Sign In Error", "Invalid email or password. Try demo accounts: admin@demo.com / demo123");
       return false;
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred");
