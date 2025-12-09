@@ -1,0 +1,63 @@
+The "Fix & Build" Master Prompt
+Markdown
+
+Act as a Senior React Native Engineer. We are finalizing the setup and moving to **Stage 2** (Real-Time Logic).
+
+### **Step 1: Environment Configuration (CRITICAL)**
+First, create a file named `.env` in the root directory (same level as `package.json`) and populate it with these exact credentials to fix the connection error:
+```env
+EXPO_PUBLIC_SUPABASE_URL=[https://llgphnpfyyuaxsazuszb.supabase.co](https://llgphnpfyyuaxsazuszb.supabase.co)
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZ3BobnBmeXl1YXhzYXp1c3piIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODcwOTMsImV4cCI6MjA4MDg2MzA5M30.5Rj0v44LfwscnDCIHPcZ6bsA713uU3OVfgFemwomP_k
+Step 2: Implement Logistics Features
+Now that the app can connect, modify the following screens to activate the logic:
+
+A. Address Geocoding (Restaurant Side)
+File: client/screens/restaurant/CreateOrderScreen.tsx
+
+Import * as Location from 'expo-location'.
+
+When the user submits the form, take the customer_address text.
+
+Use Location.geocodeAsync(address) to get {latitude, longitude}.
+
+Save these coordinates into the customer_geo column in the orders table.
+
+Fallback: If geocoding fails, save null but still create the order.
+
+B. Driver Live Tracking (Driver Side)
+File: client/screens/driver/MyTasksScreen.tsx
+
+Add a "Go Online/Offline" toggle switch in the UI.
+
+When "Online":
+
+Request Location.requestForegroundPermissionsAsync().
+
+Use Location.watchPositionAsync (accuracy: High, timeInterval: 10000ms) to track the driver.
+
+On every update, send an RPC call or Update query to profiles table: update current_location for auth.uid().
+
+C. The "God View" Map (Dispatcher Side)
+File: client/screens/dispatcher/MapScreen.tsx
+
+Use supabase.channel to subscribe to postgres_changes on the profiles table.
+
+When a driver's row updates, update their marker position on the map in real-time.
+
+Fetch "Pending" orders and display them as Pins on the map (using the customer_geo data from Step A).
+
+IMPORTANT: Ensure react-native-maps and expo-location are correctly imported and configured. Handle permissions gracefully.
+
+EXECUTE ALL STEPS NOW.
+
+
+---
+
+### **بعد ما Replit يخلص:**
+
+1.  **Stop & Start:** بما أننا أضفنا ملف `.env`، لازم تعمل **Stop** للسيرفر في Replit وتشغله تاني (زرار `Run` الأخضر الكبير) عشان يلقط المفاتيح الجديدة.
+2.  **جرب بنفسك:**
+    * ادخل بحساب **Restaurant** واعمل أوردر واكتب عنوان حقيقي (مثلاً: "Cairo Tower").
+    * ادخل بحساب **Dispatcher** وشوف هل ظهر دبوس (Pin) عند برج القاهرة ولا لأ.
+
+توكل على الله يا هندسة.. منتظر النتيجة! 🚀
