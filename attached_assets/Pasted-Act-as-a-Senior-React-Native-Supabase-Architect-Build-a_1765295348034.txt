@@ -1,0 +1,76 @@
+Act as a Senior React Native & Supabase Architect.
+Build a complete Delivery Management System using **Expo (React Native)** and **Supabase**.
+
+### **1. Tech Stack Requirements (Strict)**
+* **Framework:** Expo SDK 50+ (Managed Workflow).
+* **Language:** TypeScript.
+* **Navigation:** Expo Router (File-based navigation).
+* **Styling:** NativeWind (TailwindCSS).
+* **Backend:** Supabase (Auth, Database, Realtime).
+* **Maps:** react-native-maps.
+* **Icons:** Lucide-react-native.
+
+### **2. App Architecture & Roles**
+The app must handle 4 distinct User Roles. Upon login, redirect the user based on their role in the `profiles` table:
+1.  **Admin:** Full access.
+2.  **Dispatcher:** Can view map, assign orders, set delivery times.
+3.  **Restaurant:** Can create orders, view only their own orders.
+4.  **Driver:** Can view assigned orders, update status, toggle availability.
+
+### **3. Database Schema (Context for you to build the UI)**
+Assume the Supabase database has these tables. **Generate the types/interfaces based on this:**
+
+* **Table `profiles`:**
+    * `id` (uuid, PK, references auth.users)
+    * `role` (text: 'admin', 'dispatcher', 'restaurant', 'driver')
+    * `full_name` (text)
+    * `phone_number` (text)
+
+* **Table `orders`:**
+    * `id` (uuid, PK)
+    * `created_at` (timestamp)
+    * `restaurant_id` (uuid, FK -> profiles.id)
+    * `driver_id` (uuid, FK -> profiles.id, nullable)
+    * `customer_name` (text)
+    * `customer_address` (text)
+    * `customer_geo` (jsonb: {lat: number, lng: number})
+    * `phone_primary` (text)
+    * `phone_secondary` (text, nullable)
+    * `collection_amount` (numeric)
+    * `delivery_fee` (numeric)
+    * `status` (text: 'pending', 'assigned', 'picked_up', 'delivered', 'cancelled')
+    * `delivery_window` (text, set by dispatcher)
+
+### **4. Detailed Features Implementation**
+
+#### **A. Authentication (App Entry)**
+* Create a Login Screen (Email/Password).
+* Create a Context `AuthProvider` to handle session and fetch user Role.
+* **Logic:** If Role == 'restaurant' -> Go to `/restaurant/home`. If Role == 'dispatcher' -> Go to `/dispatcher/dashboard`, etc.
+
+#### **B. Restaurant Flow (Screens: `/restaurant`)**
+* **Create Order Screen:** Form inputs for (Customer Name, Address, Phone 1, Phone 2, Collection Amount). Auto-calculate `delivery_fee` (default value for now).
+* **My Orders Screen:** A list showing status of orders created by this user.
+
+#### **C. Dispatcher Flow (Screens: `/dispatcher`)**
+* **Dashboard:** A Tabs view.
+    * *Tab 1 (Map):* Full screen map showing markers for "Active Drivers" (simulate location for now) and "Pending Orders".
+    * *Tab 2 (Orders):* List of 'pending' orders.
+* **Assignment Logic:** Clicking an order opens a modal to:
+    1.  Select a Driver (dropdown of users with role='driver').
+    2.  Set `delivery_window` (TextInput).
+    3.  Update order status to 'assigned'.
+
+#### **D. Driver Flow (Screens: `/driver`)**
+* **My Tasks:** List of orders where `driver_id` == current_user.
+* **Task Detail:** Show customer info + "Open in Maps" button.
+* **Action Buttons:** "Pick Up" (updates status), "Deliver" (updates status).
+* **Wallet:** Show Sum of `collection_amount` for delivered orders today.
+
+### **5. Important Coding Instructions**
+1.  **Environment:** Create a `.env.example` file. setup `lib/supabase.ts` to use `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+2.  **UI:** Use `NativeWind` for clean, modern styling. Use distinct colors for statuses (Pending: Yellow, Assigned: Blue, Delivered: Green).
+3.  **Error Handling:** Wrap async calls in try/catch and use `Alert.alert` for errors.
+4.  **Type Safety:** Use a `types.ts` file for all DB interfaces.
+
+**GENERATE THE FULL PROJECT STRUCTURE AND CODE NOW.**
