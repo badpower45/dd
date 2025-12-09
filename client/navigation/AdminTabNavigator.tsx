@@ -55,8 +55,8 @@ export default function AdminNavigator() {
         name="DashboardTab"
         component={DashboardScreen}
         options={{
-          title: "Dashboard",
-          headerTitle: () => <HeaderTitle title="DeliverEase" />,
+          title: "الرئيسية",
+          headerTitle: () => <HeaderTitle title="ديليفر إيز" />,
           tabBarIcon: ({ color, size }) => (
             <Feather name="bar-chart-2" size={size} color={color} />
           ),
@@ -66,8 +66,8 @@ export default function AdminNavigator() {
         name="OrdersTab"
         component={AllOrdersScreen}
         options={{
-          title: "Orders",
-          headerTitle: "All Orders",
+          title: "الطلبات",
+          headerTitle: "جميع الطلبات",
           tabBarIcon: ({ color, size }) => (
             <Feather name="package" size={size} color={color} />
           ),
@@ -77,8 +77,8 @@ export default function AdminNavigator() {
         name="UsersTab"
         component={UsersScreen}
         options={{
-          title: "Users",
-          headerTitle: "Manage Users",
+          title: "المستخدمين",
+          headerTitle: "إدارة المستخدمين",
           tabBarIcon: ({ color, size }) => (
             <Feather name="users" size={size} color={color} />
           ),
@@ -88,8 +88,8 @@ export default function AdminNavigator() {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          title: "Profile",
-          headerTitle: "Profile",
+          title: "الملف",
+          headerTitle: "الملف الشخصي",
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),

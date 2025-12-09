@@ -1,9 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { View, StyleSheet, Pressable, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Platform, I18nManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { MapPin, Truck, X, Clock } from "lucide-react-native";
+import { MapPin, Truck, X } from "lucide-react-native";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 let MapView: any = null;
 let Marker: any = null;
@@ -81,19 +84,19 @@ export default function MapScreen() {
         <View style={styles.webFallback}>
           <MapPin size={48} color={theme.textSecondary} />
           <ThemedText type="h3" style={{ marginTop: Spacing.lg, textAlign: "center" }}>
-            Map View
+            عرض الخريطة
           </ThemedText>
           <ThemedText
             type="small"
             style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.sm }}
           >
-            Run in Expo Go to view the interactive map
+            شغّل التطبيق في Expo Go لعرض الخريطة التفاعلية
           </ThemedText>
           <ThemedText
             type="body"
             style={{ marginTop: Spacing["2xl"], textAlign: "center" }}
           >
-            {orders.length} pending orders
+            {orders.length} طلب قيد الانتظار
           </ThemedText>
         </View>
       ) : (
@@ -129,7 +132,7 @@ export default function MapScreen() {
                   latitude: driver.current_location.lat,
                   longitude: driver.current_location.lng,
                 }}
-                title={driver.full_name || "Driver"}
+                title={driver.full_name || "سائق"}
               >
                 <View style={[styles.driverMarker, { backgroundColor: `${getDriverMarkerColor(driver.driver_status)}20` }]}>
                   <Truck size={20} color={getDriverMarkerColor(driver.driver_status)} />
@@ -152,15 +155,15 @@ export default function MapScreen() {
       >
         <View style={styles.legendRow}>
           <View style={[styles.legendDot, { backgroundColor: "#EAB308" }]} />
-          <ThemedText type="caption">Pending Orders ({orders.length})</ThemedText>
+          <ThemedText type="caption">طلبات قيد الانتظار ({orders.length})</ThemedText>
         </View>
         <View style={styles.legendRow}>
           <View style={[styles.legendDot, { backgroundColor: "#10B981" }]} />
-          <ThemedText type="caption">Available Drivers ({availableDrivers.length})</ThemedText>
+          <ThemedText type="caption">سائقون متاحون ({availableDrivers.length})</ThemedText>
         </View>
         <View style={styles.legendRow}>
           <View style={[styles.legendDot, { backgroundColor: "#F97316" }]} />
-          <ThemedText type="caption">Busy Drivers ({busyDrivers.length})</ThemedText>
+          <ThemedText type="caption">سائقون مشغولون ({busyDrivers.length})</ThemedText>
         </View>
       </View>
 
@@ -200,7 +203,7 @@ export default function MapScreen() {
             <View style={styles.detailRow}>
               <StatusBadge status={selectedOrder.status} />
               <ThemedText type="h4" style={{ color: theme.link }}>
-                ${selectedOrder.collection_amount.toFixed(2)}
+                {selectedOrder.collection_amount.toFixed(2)} ر.س
               </ThemedText>
             </View>
           </View>
@@ -210,8 +213,8 @@ export default function MapScreen() {
             onPress={handleAssignOrder}
           >
             <Truck size={20} color="#FFFFFF" />
-            <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.sm }}>
-              Assign Driver
+            <ThemedText type="body" style={{ color: "#FFFFFF", marginRight: Spacing.sm }}>
+              تعيين سائق
             </ThemedText>
           </Pressable>
         </View>
@@ -248,7 +251,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: Spacing.sm,
+    marginLeft: Spacing.sm,
   },
   orderMarker: {
     backgroundColor: "rgba(234, 179, 8, 0.2)",

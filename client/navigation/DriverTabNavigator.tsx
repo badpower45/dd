@@ -53,8 +53,8 @@ export default function DriverNavigator() {
         name="TasksTab"
         component={MyTasksScreen}
         options={{
-          title: "Tasks",
-          headerTitle: () => <HeaderTitle title="DeliverEase" />,
+          title: "المهام",
+          headerTitle: () => <HeaderTitle title="ديليفر إيز" />,
           tabBarIcon: ({ color, size }) => (
             <Feather name="list" size={size} color={color} />
           ),
@@ -64,8 +64,8 @@ export default function DriverNavigator() {
         name="WalletTab"
         component={WalletScreen}
         options={{
-          title: "Wallet",
-          headerTitle: "My Wallet",
+          title: "المحفظة",
+          headerTitle: "محفظتي",
           tabBarIcon: ({ color, size }) => (
             <Feather name="credit-card" size={size} color={color} />
           ),
@@ -75,8 +75,8 @@ export default function DriverNavigator() {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          title: "Profile",
-          headerTitle: "Profile",
+          title: "الملف",
+          headerTitle: "الملف الشخصي",
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),

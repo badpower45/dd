@@ -7,6 +7,7 @@ import {
   Pressable,
   ActivityIndicator,
   ScrollView,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -28,24 +29,27 @@ import { assignOrder } from "@/lib/storage";
 import { Order, Profile } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
 const DEMO_DRIVERS: Profile[] = [
   {
     id: "driver-001",
     role: "driver",
-    full_name: "John Driver",
-    phone_number: "+1234567893",
+    full_name: "محمد السائق",
+    phone_number: "+966501234567",
   },
   {
     id: "driver-002",
     role: "driver",
-    full_name: "Sarah Smith",
-    phone_number: "+1234567894",
+    full_name: "أحمد الريس",
+    phone_number: "+966502345678",
   },
   {
     id: "driver-003",
     role: "driver",
-    full_name: "Mike Johnson",
-    phone_number: "+1234567895",
+    full_name: "خالد المشرف",
+    phone_number: "+966503456789",
   },
 ];
 
@@ -73,11 +77,11 @@ export default function AssignOrderScreen() {
     setIsSubmitting(true);
     try {
       await assignOrder(order.id, selectedDriver.id, deliveryWindow.trim());
-      Alert.alert("Success", "Order has been assigned to the driver", [
-        { text: "OK", onPress: () => navigation.goBack() },
+      Alert.alert("تم بنجاح", "تم تعيين الطلب للسائق", [
+        { text: "حسناً", onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      Alert.alert("Error", "Failed to assign order. Please try again.");
+      Alert.alert("خطأ", "فشل في تعيين الطلب. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +90,7 @@ export default function AssignOrderScreen() {
   if (!order) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText>Order not found</ThemedText>
+        <ThemedText>الطلب غير موجود</ThemedText>
       </ThemedView>
     );
   }
@@ -105,7 +109,7 @@ export default function AssignOrderScreen() {
         >
           <X size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">Assign Order</ThemedText>
+        <ThemedText type="h3">تعيين الطلب</ThemedText>
         <Pressable
           style={[styles.headerButton, !isValid && { opacity: 0.5 }]}
           onPress={handleAssign}
@@ -128,7 +132,7 @@ export default function AssignOrderScreen() {
       >
         <View style={styles.section}>
           <ThemedText type="h4" style={styles.sectionTitle}>
-            Order Summary
+            ملخص الطلب
           </ThemedText>
 
           <View
@@ -165,9 +169,9 @@ export default function AssignOrderScreen() {
               <DollarSign size={16} color={theme.link} />
               <ThemedText
                 type="h4"
-                style={{ color: theme.link, marginLeft: Spacing.sm }}
+                style={{ color: theme.link, marginRight: Spacing.sm }}
               >
-                ${order.collection_amount.toFixed(2)}
+                {order.collection_amount.toFixed(2)} ر.س
               </ThemedText>
             </View>
           </View>
@@ -175,7 +179,7 @@ export default function AssignOrderScreen() {
 
         <View style={styles.section}>
           <ThemedText type="h4" style={styles.sectionTitle}>
-            Select Driver
+            اختر السائق
           </ThemedText>
 
           {DEMO_DRIVERS.map((driver) => (
@@ -227,7 +231,7 @@ export default function AssignOrderScreen() {
 
         <View style={styles.section}>
           <ThemedText type="h4" style={styles.sectionTitle}>
-            Delivery Window
+            وقت التوصيل
           </ThemedText>
 
           <View style={styles.inputGroup}>
@@ -241,11 +245,12 @@ export default function AssignOrderScreen() {
                   backgroundColor: theme.backgroundDefault,
                   borderColor: theme.border,
                   color: theme.text,
+                  textAlign: "right",
                 },
               ]}
               value={deliveryWindow}
               onChangeText={setDeliveryWindow}
-              placeholder="e.g., 6:00 PM - 6:30 PM"
+              placeholder="مثال: ٦:٠٠ م - ٦:٣٠ م"
               placeholderTextColor={theme.textSecondary}
             />
           </View>

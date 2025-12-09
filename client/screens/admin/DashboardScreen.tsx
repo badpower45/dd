@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
+import { View, ScrollView, StyleSheet, RefreshControl, I18nManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -19,6 +19,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { getOrders, seedDemoOrders } from "@/lib/storage";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows, StatusColors } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -109,27 +112,27 @@ export default function DashboardScreen() {
             <TrendingUp size={20} color="#FFFFFF" />
             <ThemedText
               type="small"
-              style={{ color: "#FFFFFF", marginLeft: Spacing.sm }}
+              style={{ color: "#FFFFFF", marginRight: Spacing.sm }}
             >
-              Total Revenue (Delivered)
+              إجمالي الإيرادات (المُسلّم)
             </ThemedText>
           </View>
           <ThemedText
             type="h1"
             style={{ color: "#FFFFFF", marginTop: Spacing.md }}
           >
-            ${stats.totalRevenue.toFixed(2)}
+            {stats.totalRevenue.toFixed(2)} ر.س
           </ThemedText>
           <ThemedText
             type="caption"
             style={{ color: "rgba(255,255,255,0.8)", marginTop: Spacing.xs }}
           >
-            From {stats.delivered} completed deliveries
+            من {stats.delivered} توصيلة مكتملة
           </ThemedText>
         </View>
 
         <ThemedText type="h4" style={styles.sectionTitle}>
-          Order Status Overview
+          نظرة عامة على حالة الطلبات
         </ThemedText>
 
         <View style={styles.statsGrid}>
@@ -137,34 +140,34 @@ export default function DashboardScreen() {
             icon={Package}
             iconColor={theme.text}
             iconBg={theme.backgroundSecondary}
-            label="Total Orders"
+            label="إجمالي الطلبات"
             value={stats.total}
           />
           <StatCard
             icon={Clock}
             iconColor={StatusColors.pending.text}
             iconBg={StatusColors.pending.bg}
-            label="Pending"
+            label="قيد الانتظار"
             value={stats.pending}
           />
           <StatCard
             icon={Truck}
             iconColor={StatusColors.assigned.text}
             iconBg={StatusColors.assigned.bg}
-            label="Assigned"
+            label="تم التعيين"
             value={stats.assigned}
           />
           <StatCard
             icon={CheckCircle}
             iconColor={StatusColors.delivered.text}
             iconBg={StatusColors.delivered.bg}
-            label="Delivered"
+            label="تم التوصيل"
             value={stats.delivered}
           />
         </View>
 
         <ThemedText type="h4" style={styles.sectionTitle}>
-          Quick Stats
+          إحصائيات سريعة
         </ThemedText>
 
         <View
@@ -173,11 +176,11 @@ export default function DashboardScreen() {
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
               <Users size={20} color={theme.textSecondary} />
-              <View style={{ marginLeft: Spacing.md }}>
+              <View style={{ marginRight: Spacing.md }}>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Active Drivers
+                  السائقون النشطون
                 </ThemedText>
-                <ThemedText type="h4">3</ThemedText>
+                <ThemedText type="h4">٣</ThemedText>
               </View>
             </View>
           </View>
@@ -185,11 +188,11 @@ export default function DashboardScreen() {
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
               <Package size={20} color={theme.textSecondary} />
-              <View style={{ marginLeft: Spacing.md }}>
+              <View style={{ marginRight: Spacing.md }}>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Avg. Delivery Fee
+                  متوسط رسوم التوصيل
                 </ThemedText>
-                <ThemedText type="h4">$5.00</ThemedText>
+                <ThemedText type="h4">٥.٠٠ ر.س</ThemedText>
               </View>
             </View>
           </View>

@@ -6,8 +6,10 @@ import {
   Image,
   Pressable,
   ActivityIndicator,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Truck, Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
@@ -16,6 +18,16 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
+const demoAccounts = [
+  { email: "admin@demo.com", role: "مدير", icon: "👨‍💼" },
+  { email: "dispatcher@demo.com", role: "مُنسق", icon: "📋" },
+  { email: "restaurant@demo.com", role: "مطعم", icon: "🍽️" },
+  { email: "driver@demo.com", role: "سائق", icon: "🚗" },
+];
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -39,82 +51,77 @@ export default function LoginScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + Spacing["3xl"],
+            paddingTop: insets.top + Spacing["2xl"],
             paddingBottom: insets.bottom + Spacing.xl,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logoContainer}>
-          <Image
-            source={require("../../assets/images/icon.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+        <View style={styles.headerSection}>
+          <View style={[styles.logoWrapper, { backgroundColor: theme.primary + "15" }]}>
+            <Truck size={48} color={theme.primary} strokeWidth={1.5} />
+          </View>
           <ThemedText type="h1" style={styles.appName}>
-            DeliverEase
+            ديليفر إيز
           </ThemedText>
           <ThemedText
-            type="small"
+            type="body"
             style={[styles.tagline, { color: theme.textSecondary }]}
           >
-            Delivery Management System
+            نظام إدارة التوصيل الذكي
           </ThemedText>
         </View>
 
-        <View style={styles.formContainer}>
+        <View style={[styles.formCard, { backgroundColor: theme.backgroundDefault }]}>
+          <ThemedText type="h2" style={styles.formTitle}>
+            تسجيل الدخول
+          </ThemedText>
+          
           <View style={styles.inputGroup}>
-            <ThemedText type="small" style={styles.label}>
-              Email
+            <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
+              البريد الإلكتروني
             </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.backgroundDefault,
-                  borderColor: theme.border,
-                  color: theme.text,
-                },
-              ]}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <View style={[styles.inputWrapper, { borderColor: theme.border, backgroundColor: theme.backgroundRoot }]}>
+              <Mail size={20} color={theme.textSecondary} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: theme.text }]}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="أدخل بريدك الإلكتروني"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textAlign="right"
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <ThemedText type="small" style={styles.label}>
-              Password
+            <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
+              كلمة المرور
             </ThemedText>
-            <View style={styles.passwordContainer}>
+            <View style={[styles.inputWrapper, { borderColor: theme.border, backgroundColor: theme.backgroundRoot }]}>
+              <Lock size={20} color={theme.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={[
-                  styles.input,
-                  styles.passwordInput,
-                  {
-                    backgroundColor: theme.backgroundDefault,
-                    borderColor: theme.border,
-                    color: theme.text,
-                  },
-                ]}
+                style={[styles.input, { color: theme.text }]}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter your password"
+                placeholder="أدخل كلمة المرور"
                 placeholderTextColor={theme.textSecondary}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                textAlign="right"
               />
               <Pressable
-                style={styles.showPasswordButton}
+                style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <ThemedText type="small" style={{ color: theme.link }}>
-                  {showPassword ? "Hide" : "Show"}
-                </ThemedText>
+                {showPassword ? (
+                  <EyeOff size={20} color={theme.textSecondary} />
+                ) : (
+                  <Eye size={20} color={theme.textSecondary} />
+                )}
               </Pressable>
             </View>
           </View>
@@ -127,49 +134,51 @@ export default function LoginScreen() {
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              "Sign In"
+              "دخول"
             )}
           </Button>
 
           <Pressable style={styles.forgotPassword}>
             <ThemedText type="small" style={{ color: theme.link }}>
-              Forgot Password?
+              نسيت كلمة المرور؟
             </ThemedText>
           </Pressable>
         </View>
 
         <View style={styles.demoSection}>
+          <View style={styles.dividerContainer}>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <ThemedText type="small" style={[styles.dividerText, { color: theme.textSecondary, backgroundColor: theme.backgroundRoot }]}>
+              حسابات تجريبية
+            </ThemedText>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          </View>
+          
           <ThemedText
-            type="small"
-            style={[styles.demoTitle, { color: theme.textSecondary }]}
+            type="caption"
+            style={[styles.demoHint, { color: theme.textSecondary }]}
           >
-            Demo Accounts (Password: demo123)
+            كلمة المرور: demo123
           </ThemedText>
-          <View style={styles.demoAccounts}>
-            {[
-              { email: "admin@demo.com", role: "Admin" },
-              { email: "dispatcher@demo.com", role: "Dispatcher" },
-              { email: "restaurant@demo.com", role: "Restaurant" },
-              { email: "driver@demo.com", role: "Driver" },
-            ].map((account) => (
+          
+          <View style={styles.demoGrid}>
+            {demoAccounts.map((account) => (
               <Pressable
                 key={account.email}
                 style={[
-                  styles.demoAccount,
-                  { backgroundColor: theme.backgroundDefault },
+                  styles.demoCard,
+                  { 
+                    backgroundColor: theme.backgroundDefault,
+                    borderColor: theme.border,
+                  },
                 ]}
                 onPress={async () => {
                   await signIn(account.email, "demo123");
                 }}
               >
-                <ThemedText type="small" style={{ fontWeight: "600" }}>
+                <ThemedText style={styles.demoIcon}>{account.icon}</ThemedText>
+                <ThemedText type="small" style={styles.demoRole}>
                   {account.role}
-                </ThemedText>
-                <ThemedText
-                  type="caption"
-                  style={{ color: theme.textSecondary }}
-                >
-                  {account.email}
                 </ThemedText>
               </Pressable>
             ))}
@@ -181,7 +190,7 @@ export default function LoginScreen() {
             type="caption"
             style={{ color: theme.textSecondary, textAlign: "center" }}
           >
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            بتسجيل الدخول، أنت توافق على شروط الخدمة وسياسة الخصوصية
           </ThemedText>
         </View>
       </KeyboardAwareScrollViewCompat>
@@ -197,21 +206,38 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
   },
-  logoContainer: {
+  headerSection: {
     alignItems: "center",
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
   },
-  logo: {
+  logoWrapper: {
     width: 100,
     height: 100,
+    borderRadius: BorderRadius.xl,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing.lg,
+  },
+  logo: {
+    width: 60,
+    height: 60,
   },
   appName: {
     marginBottom: Spacing.xs,
+    fontSize: 32,
+    fontWeight: "700",
   },
-  tagline: {},
-  formContainer: {
-    marginBottom: Spacing["2xl"],
+  tagline: {
+    fontSize: 16,
+  },
+  formCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    marginBottom: Spacing.xl,
+  },
+  formTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
   },
   inputGroup: {
     marginBottom: Spacing.lg,
@@ -219,29 +245,32 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: Spacing.sm,
     fontWeight: "500",
+    textAlign: "right",
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 56,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1.5,
+    paddingHorizontal: Spacing.md,
+  },
+  inputIcon: {
+    marginLeft: Spacing.sm,
   },
   input: {
-    height: Spacing.inputHeight,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
+    flex: 1,
+    height: "100%",
     fontSize: 16,
+    paddingHorizontal: Spacing.sm,
   },
-  passwordContainer: {
-    position: "relative",
-  },
-  passwordInput: {
-    paddingRight: 60,
-  },
-  showPasswordButton: {
-    position: "absolute",
-    right: Spacing.md,
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
+  eyeButton: {
+    padding: Spacing.sm,
   },
   loginButton: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
+    height: 56,
+    borderRadius: BorderRadius.sm,
   },
   forgotPassword: {
     alignItems: "center",
@@ -249,24 +278,45 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
   },
   demoSection: {
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.xl,
   },
-  demoTitle: {
-    textAlign: "center",
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.md,
   },
-  demoAccounts: {
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    paddingHorizontal: Spacing.md,
+  },
+  demoHint: {
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+  },
+  demoGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.sm,
     justifyContent: "center",
   },
-  demoAccount: {
-    paddingVertical: Spacing.sm,
+  demoCard: {
+    width: "47%",
+    paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.xs,
+    borderRadius: BorderRadius.md,
     alignItems: "center",
-    minWidth: 140,
+    borderWidth: 1,
+  },
+  demoIcon: {
+    fontSize: 28,
+    marginBottom: Spacing.sm,
+  },
+  demoRole: {
+    fontWeight: "600",
+    textAlign: "center",
   },
   footer: {
     marginTop: "auto",

@@ -85,8 +85,8 @@ function RestaurantTabs({ navigation }: any) {
           name="OrdersTab"
           component={MyOrdersScreen}
           options={{
-            title: "My Orders",
-            headerTitle: () => <HeaderTitle title="DeliverEase" />,
+            title: "طلباتي",
+            headerTitle: () => <HeaderTitle title="ديليفر إيز" />,
             tabBarIcon: ({ color, size }) => (
               <Feather name="package" size={size} color={color} />
             ),
@@ -96,8 +96,8 @@ function RestaurantTabs({ navigation }: any) {
           name="ProfileTab"
           component={ProfileScreen}
           options={{
-            title: "Profile",
-            headerTitle: "Profile",
+            title: "الملف",
+            headerTitle: "الملف الشخصي",
             tabBarIcon: ({ color, size }) => (
               <Feather name="user" size={size} color={color} />
             ),

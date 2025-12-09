@@ -27,8 +27,8 @@ const DEMO_USERS: Record<string, { password: string; profile: Profile }> = {
     profile: {
       id: "admin-001",
       role: "admin",
-      full_name: "Admin User",
-      phone_number: "+1234567890",
+      full_name: "أحمد المدير",
+      phone_number: "+966501234567",
       email: "admin@demo.com",
     },
   },
@@ -37,8 +37,8 @@ const DEMO_USERS: Record<string, { password: string; profile: Profile }> = {
     profile: {
       id: "dispatcher-001",
       role: "dispatcher",
-      full_name: "Sarah Dispatcher",
-      phone_number: "+1234567891",
+      full_name: "سارة المُنسقة",
+      phone_number: "+966502345678",
       email: "dispatcher@demo.com",
     },
   },
@@ -47,8 +47,8 @@ const DEMO_USERS: Record<string, { password: string; profile: Profile }> = {
     profile: {
       id: "restaurant-001",
       role: "restaurant",
-      full_name: "Pizza Palace",
-      phone_number: "+1234567892",
+      full_name: "مطعم البيتزا",
+      phone_number: "+966503456789",
       email: "restaurant@demo.com",
     },
   },
@@ -57,8 +57,8 @@ const DEMO_USERS: Record<string, { password: string; profile: Profile }> = {
     profile: {
       id: "driver-001",
       role: "driver",
-      full_name: "John Driver",
-      phone_number: "+1234567893",
+      full_name: "محمد السائق",
+      phone_number: "+966504567890",
       email: "driver@demo.com",
     },
   },

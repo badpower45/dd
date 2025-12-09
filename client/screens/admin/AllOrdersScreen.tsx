@@ -5,12 +5,13 @@ import {
   StyleSheet,
   RefreshControl,
   Pressable,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
-import { MapPin, Phone, DollarSign, Clock } from "lucide-react-native";
+import { MapPin, Phone, Clock } from "lucide-react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -20,11 +21,14 @@ import { getOrders, seedDemoOrders } from "@/lib/storage";
 import { Order, OrderStatus } from "@/lib/types";
 import { Spacing, BorderRadius, StatusColors } from "@/constants/theme";
 
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
 const FILTER_OPTIONS: { label: string; value: OrderStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Pending", value: "pending" },
-  { label: "Assigned", value: "assigned" },
-  { label: "Delivered", value: "delivered" },
+  { label: "الكل", value: "all" },
+  { label: "قيد الانتظار", value: "pending" },
+  { label: "تم التعيين", value: "assigned" },
+  { label: "تم التوصيل", value: "delivered" },
 ];
 
 export default function AllOrdersScreen() {
@@ -67,7 +71,7 @@ export default function AllOrdersScreen() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
@@ -83,7 +87,7 @@ export default function AllOrdersScreen() {
             <Clock size={14} color={theme.textSecondary} />
             <ThemedText
               type="caption"
-              style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}
+              style={{ color: theme.textSecondary, marginRight: Spacing.xs }}
             >
               {formatTime(item.created_at)}
             </ThemedText>
@@ -115,9 +119,8 @@ export default function AllOrdersScreen() {
 
       <View style={styles.cardFooter}>
         <View style={styles.amountContainer}>
-          <DollarSign size={16} color={theme.link} />
           <ThemedText type="h3" style={{ color: theme.link }}>
-            {item.collection_amount.toFixed(2)}
+            {item.collection_amount.toFixed(2)} ر.س
           </ThemedText>
         </View>
         {item.delivery_window ? (
@@ -159,18 +162,28 @@ export default function AllOrdersScreen() {
     </View>
   );
 
+  const getFilterLabel = (filterValue: OrderStatus | "all") => {
+    const labels: Record<string, string> = {
+      all: "الكل",
+      pending: "قيد الانتظار",
+      assigned: "تم التعيين",
+      delivered: "تم التوصيل",
+    };
+    return labels[filterValue] || filterValue;
+  };
+
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
-        No Orders Found
+        لا توجد طلبات
       </ThemedText>
       <ThemedText
         type="small"
         style={{ color: theme.textSecondary, textAlign: "center" }}
       >
         {filter === "all"
-          ? "No orders have been created yet"
-          : `No ${filter} orders found`}
+          ? "لم يتم إنشاء أي طلبات بعد"
+          : `لا توجد طلبات ${getFilterLabel(filter)}`}
       </ThemedText>
     </View>
   );
@@ -243,7 +256,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   cardText: {
-    marginLeft: Spacing.sm,
+    marginRight: Spacing.sm,
     flex: 1,
   },
   cardFooter: {

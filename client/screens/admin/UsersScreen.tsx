@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { View, FlatList, StyleSheet, Pressable } from "react-native";
+import { View, FlatList, StyleSheet, Pressable, I18nManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { User, Phone, Mail, Shield } from "lucide-react-native";
+import { Phone, Mail } from "lucide-react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -11,57 +11,60 @@ import { useTheme } from "@/hooks/useTheme";
 import { Profile, UserRole } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
 const DEMO_USERS: Profile[] = [
   {
     id: "admin-001",
     role: "admin",
-    full_name: "Admin User",
-    phone_number: "+1234567890",
+    full_name: "أحمد المدير",
+    phone_number: "+966501234567",
     email: "admin@demo.com",
   },
   {
     id: "dispatcher-001",
     role: "dispatcher",
-    full_name: "Sarah Dispatcher",
-    phone_number: "+1234567891",
+    full_name: "سارة المُنسقة",
+    phone_number: "+966501234568",
     email: "dispatcher@demo.com",
   },
   {
     id: "restaurant-001",
     role: "restaurant",
-    full_name: "Pizza Palace",
-    phone_number: "+1234567892",
+    full_name: "مطعم البيتزا",
+    phone_number: "+966501234569",
     email: "restaurant@demo.com",
   },
   {
     id: "driver-001",
     role: "driver",
-    full_name: "John Driver",
-    phone_number: "+1234567893",
+    full_name: "محمد السائق",
+    phone_number: "+966501234570",
     email: "driver@demo.com",
   },
   {
     id: "driver-002",
     role: "driver",
-    full_name: "Sarah Smith",
-    phone_number: "+1234567894",
-    email: "sarah@demo.com",
+    full_name: "عبدالله الحربي",
+    phone_number: "+966501234571",
+    email: "abdullah@demo.com",
   },
   {
     id: "driver-003",
     role: "driver",
-    full_name: "Mike Johnson",
-    phone_number: "+1234567895",
-    email: "mike@demo.com",
+    full_name: "خالد الشمري",
+    phone_number: "+966501234572",
+    email: "khaled@demo.com",
   },
 ];
 
 const ROLE_FILTERS: { label: string; value: UserRole | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Admin", value: "admin" },
-  { label: "Dispatcher", value: "dispatcher" },
-  { label: "Restaurant", value: "restaurant" },
-  { label: "Driver", value: "driver" },
+  { label: "الكل", value: "all" },
+  { label: "مدير", value: "admin" },
+  { label: "مُنسق", value: "dispatcher" },
+  { label: "مطعم", value: "restaurant" },
+  { label: "سائق", value: "driver" },
 ];
 
 export default function UsersScreen() {
@@ -87,10 +90,10 @@ export default function UsersScreen() {
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
-      admin: "Administrator",
-      dispatcher: "Dispatcher",
-      restaurant: "Restaurant",
-      driver: "Driver",
+      admin: "مدير",
+      dispatcher: "مُنسق",
+      restaurant: "مطعم",
+      driver: "سائق",
     };
     return labels[role] || role;
   };
@@ -132,7 +135,7 @@ export default function UsersScreen() {
         <Mail size={16} color={theme.textSecondary} />
         <ThemedText
           type="small"
-          style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}
+          style={{ color: theme.textSecondary, marginRight: Spacing.sm }}
         >
           {item.email}
         </ThemedText>
@@ -142,7 +145,7 @@ export default function UsersScreen() {
         <Phone size={16} color={theme.textSecondary} />
         <ThemedText
           type="small"
-          style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}
+          style={{ color: theme.textSecondary, marginRight: Spacing.sm }}
         >
           {item.phone_number}
         </ThemedText>
@@ -238,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: Spacing.md,
+    marginLeft: Spacing.md,
   },
   roleBadge: {
     alignSelf: "flex-start",

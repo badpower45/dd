@@ -7,6 +7,7 @@ import {
   Pressable,
   Alert,
   Switch,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -41,6 +42,9 @@ import {
 } from "@/lib/storage";
 import { Order, OrderStatus, DriverStatus } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function MyTasksScreen() {
   const insets = useSafeAreaInsets();
@@ -101,7 +105,7 @@ export default function MyTasksScreen() {
     if (!onlineIntentRef.current) return;
     
     if (status !== "granted") {
-      Alert.alert("Permission Denied", "Location permission is required to go online");
+      Alert.alert("تم رفض الإذن", "إذن الموقع مطلوب للاتصال بالإنترنت");
       setIsOnline(false);
       return;
     }
@@ -139,7 +143,7 @@ export default function MyTasksScreen() {
       console.error("Failed to start location tracking:", error);
       stopLocationTracking();
       setIsOnline(false);
-      Alert.alert("Error", "Failed to start location tracking");
+      Alert.alert("خطأ", "فشل بدء تتبع الموقع");
     }
   };
 
@@ -160,13 +164,13 @@ export default function MyTasksScreen() {
       await updateOrderStatus(orderId, newStatus);
       await loadOrders();
       Alert.alert(
-        "Success",
+        "تم بنجاح",
         newStatus === "picked_up"
-          ? "Order marked as picked up"
-          : "Order delivered successfully!",
+          ? "تم تحديد الطلب كمستلم"
+          : "تم توصيل الطلب بنجاح!",
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to update order status");
+      Alert.alert("خطأ", "فشل تحديث حالة الطلب");
     }
   };
 
@@ -252,9 +256,9 @@ export default function MyTasksScreen() {
             <Navigation size={18} color={theme.link} />
             <ThemedText
               type="small"
-              style={{ color: theme.link, marginLeft: Spacing.xs, fontWeight: "600" }}
+              style={{ color: theme.link, marginRight: Spacing.xs, fontWeight: "600" }}
             >
-              Navigate
+              الملاحة
             </ThemedText>
           </Pressable>
 
@@ -266,9 +270,9 @@ export default function MyTasksScreen() {
               <Package size={18} color="#F97316" />
               <ThemedText
                 type="small"
-                style={{ color: "#F97316", marginLeft: Spacing.xs, fontWeight: "600" }}
+                style={{ color: "#F97316", marginRight: Spacing.xs, fontWeight: "600" }}
               >
-                Pick Up
+                استلام
               </ThemedText>
             </Pressable>
           ) : (
@@ -279,9 +283,9 @@ export default function MyTasksScreen() {
               <CheckCircle size={18} color="#10B981" />
               <ThemedText
                 type="small"
-                style={{ color: "#10B981", marginLeft: Spacing.xs, fontWeight: "600" }}
+                style={{ color: "#10B981", marginRight: Spacing.xs, fontWeight: "600" }}
               >
-                Delivered
+                تم التوصيل
               </ThemedText>
             </Pressable>
           )}
@@ -293,15 +297,15 @@ export default function MyTasksScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
-        {filter === "active" ? "No Active Tasks" : "No Completed Tasks"}
+        {filter === "active" ? "لا توجد مهام نشطة" : "لا توجد مهام مكتملة"}
       </ThemedText>
       <ThemedText
         type="small"
         style={{ color: theme.textSecondary, textAlign: "center" }}
       >
         {filter === "active"
-          ? "You don't have any assigned orders right now"
-          : "You haven't completed any deliveries yet"}
+          ? "ليس لديك أي طلبات معينة الآن"
+          : "لم تكمل أي توصيلات بعد"}
       </ThemedText>
     </View>
   );
@@ -317,8 +321,8 @@ export default function MyTasksScreen() {
         <View style={[styles.onlineToggleContainer, { backgroundColor: theme.backgroundDefault }]}>
           <View style={styles.onlineToggleLeft}>
             <Radio size={20} color={isOnline ? "#10B981" : theme.textSecondary} />
-            <ThemedText type="body" style={{ marginLeft: Spacing.sm, fontWeight: "600" }}>
-              {isOnline ? "Online" : "Offline"}
+            <ThemedText type="body" style={{ marginRight: Spacing.sm, fontWeight: "600" }}>
+              {isOnline ? "متصل" : "غير متصل"}
             </ThemedText>
           </View>
           <Switch
@@ -344,7 +348,7 @@ export default function MyTasksScreen() {
                 fontWeight: "600",
               }}
             >
-              Active
+              نشط
             </ThemedText>
           </Pressable>
           <Pressable
@@ -361,7 +365,7 @@ export default function MyTasksScreen() {
                 fontWeight: "600",
               }}
             >
-              Completed
+              مكتمل
             </ThemedText>
           </Pressable>
         </View>

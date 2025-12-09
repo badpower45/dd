@@ -5,6 +5,7 @@ import {
   StyleSheet,
   RefreshControl,
   Pressable,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -19,6 +20,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { getPendingOrders, seedDemoOrders } from "@/lib/storage";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function OrdersListScreen() {
   const insets = useSafeAreaInsets();
@@ -61,7 +65,7 @@ export default function OrdersListScreen() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
@@ -81,9 +85,9 @@ export default function OrdersListScreen() {
             <Clock size={14} color={theme.textSecondary} />
             <ThemedText
               type="caption"
-              style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}
+              style={{ color: theme.textSecondary, marginRight: Spacing.xs }}
             >
-              Created {formatTime(item.created_at)}
+              أُنشئ {formatTime(item.created_at)}
             </ThemedText>
           </View>
         </View>
@@ -122,9 +126,9 @@ export default function OrdersListScreen() {
           <Truck size={16} color={theme.link} />
           <ThemedText
             type="small"
-            style={{ color: theme.link, marginLeft: Spacing.xs, fontWeight: "600" }}
+            style={{ color: theme.link, marginRight: Spacing.xs, fontWeight: "600" }}
           >
-            Assign
+            تعيين
           </ThemedText>
         </View>
       </View>
@@ -134,13 +138,13 @@ export default function OrdersListScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
-        No Pending Orders
+        لا توجد طلبات معلقة
       </ThemedText>
       <ThemedText
         type="small"
         style={{ color: theme.textSecondary, textAlign: "center" }}
       >
-        All orders have been assigned to drivers
+        تم تعيين جميع الطلبات للسائقين
       </ThemedText>
     </View>
   );

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   RefreshControl,
   Pressable,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -20,6 +21,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getOrdersByRestaurant, seedDemoOrders } from "@/lib/storage";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function MyOrdersScreen() {
   const insets = useSafeAreaInsets();
@@ -111,13 +115,13 @@ export default function MyOrdersScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
-        No Orders Yet
+        لا توجد طلبات بعد
       </ThemedText>
       <ThemedText
         type="small"
         style={{ color: theme.textSecondary, textAlign: "center" }}
       >
-        Tap the + button to create your first order
+        اضغط على زر + لإنشاء أول طلب
       </ThemedText>
     </View>
   );

@@ -63,8 +63,8 @@ function DispatcherTabs() {
         name="MapTab"
         component={MapScreen}
         options={{
-          title: "Map",
-          headerTitle: () => <HeaderTitle title="DeliverEase" />,
+          title: "الخريطة",
+          headerTitle: () => <HeaderTitle title="ديليفر إيز" />,
           tabBarIcon: ({ color, size }) => (
             <Feather name="map" size={size} color={color} />
           ),
@@ -74,8 +74,8 @@ function DispatcherTabs() {
         name="OrdersTab"
         component={OrdersListScreen}
         options={{
-          title: "Orders",
-          headerTitle: "Pending Orders",
+          title: "الطلبات",
+          headerTitle: "الطلبات المعلقة",
           tabBarIcon: ({ color, size }) => (
             <Feather name="package" size={size} color={color} />
           ),
@@ -85,8 +85,8 @@ function DispatcherTabs() {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          title: "Profile",
-          headerTitle: "Profile",
+          title: "الملف",
+          headerTitle: "الملف الشخصي",
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),

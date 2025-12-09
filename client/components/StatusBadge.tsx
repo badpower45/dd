@@ -10,11 +10,11 @@ interface StatusBadgeProps {
 }
 
 const statusLabels: Record<OrderStatus, string> = {
-  pending: "Pending",
-  assigned: "Assigned",
-  picked_up: "Picked Up",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
+  pending: "قيد الانتظار",
+  assigned: "تم التعيين",
+  picked_up: "تم الاستلام",
+  delivered: "تم التوصيل",
+  cancelled: "ملغي",
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {

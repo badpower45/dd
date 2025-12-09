@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, FlatList, StyleSheet, RefreshControl } from "react-native";
+import { View, FlatList, StyleSheet, RefreshControl, I18nManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -13,6 +13,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getDriverTodayDeliveries, getOrdersByDriver } from "@/lib/storage";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
@@ -66,7 +69,7 @@ export default function WalletScreen() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
   };
 
   const renderDeliveryItem = ({ item }: { item: Order }) => (
@@ -82,7 +85,7 @@ export default function WalletScreen() {
         </ThemedText>
       </View>
       <ThemedText type="h4" style={{ color: theme.link }}>
-        ${item.collection_amount.toFixed(2)}
+        {item.collection_amount.toFixed(2)} ر.س
       </ThemedText>
     </View>
   );
@@ -94,18 +97,18 @@ export default function WalletScreen() {
       >
         <View style={styles.summaryHeader}>
           <Calendar size={20} color="#FFFFFF" />
-          <ThemedText type="small" style={{ color: "#FFFFFF", marginLeft: Spacing.sm }}>
-            Today's Collections
+          <ThemedText type="small" style={{ color: "#FFFFFF", marginRight: Spacing.sm }}>
+            تحصيلات اليوم
           </ThemedText>
         </View>
         <ThemedText type="h1" style={{ color: "#FFFFFF", marginTop: Spacing.md }}>
-          ${todayTotal.toFixed(2)}
+          {todayTotal.toFixed(2)} ر.س
         </ThemedText>
         <ThemedText
           type="caption"
           style={{ color: "rgba(255,255,255,0.8)", marginTop: Spacing.xs }}
         >
-          {todayDeliveries.length} deliveries completed
+          {todayDeliveries.length} توصيلة مكتملة
         </ThemedText>
       </View>
 
@@ -117,7 +120,7 @@ export default function WalletScreen() {
             <Package size={20} color="#10B981" />
           </View>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            Total Deliveries
+            إجمالي التوصيلات
           </ThemedText>
           <ThemedText type="h3">{allDeliveries.length}</ThemedText>
         </View>
@@ -129,14 +132,14 @@ export default function WalletScreen() {
             <TrendingUp size={20} color="#3B82F6" />
           </View>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            All Time
+            الإجمالي الكلي
           </ThemedText>
-          <ThemedText type="h3">${allTimeTotal.toFixed(2)}</ThemedText>
+          <ThemedText type="h3">{allTimeTotal.toFixed(2)} ر.س</ThemedText>
         </View>
       </View>
 
       <ThemedText type="h4" style={styles.sectionTitle}>
-        Today's Deliveries
+        توصيلات اليوم
       </ThemedText>
     </View>
   );
@@ -148,13 +151,13 @@ export default function WalletScreen() {
         type="body"
         style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}
       >
-        No deliveries completed today
+        لم تُكمل أي توصيلات اليوم
       </ThemedText>
       <ThemedText
         type="small"
         style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}
       >
-        Complete deliveries to see your earnings here
+        أكمل التوصيلات لترى أرباحك هنا
       </ThemedText>
     </View>
   );

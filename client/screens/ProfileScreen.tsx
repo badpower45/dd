@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Alert, Pressable, ScrollView } from "react-native";
+import { View, StyleSheet, Alert, Pressable, ScrollView, I18nManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -18,6 +18,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -26,10 +29,10 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
 
   const handleLogout = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("تسجيل الخروج", "هل أنت متأكد أنك تريد تسجيل الخروج؟", [
+      { text: "إلغاء", style: "cancel" },
       {
-        text: "Sign Out",
+        text: "تسجيل الخروج",
         style: "destructive",
         onPress: signOut,
       },
@@ -38,10 +41,10 @@ export default function ProfileScreen() {
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
-      admin: "Administrator",
-      dispatcher: "Dispatcher",
-      restaurant: "Restaurant",
-      driver: "Driver",
+      admin: "مدير",
+      dispatcher: "مُنسق",
+      restaurant: "مطعم",
+      driver: "سائق",
     };
     return labels[role] || role;
   };
@@ -77,7 +80,7 @@ export default function ProfileScreen() {
             ]}
           >
             <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
-              {user?.full_name?.charAt(0).toUpperCase() || "U"}
+              {user?.full_name?.charAt(0) || "م"}
             </ThemedText>
           </View>
           <ThemedText type="h2" style={styles.userName}>
@@ -103,7 +106,7 @@ export default function ProfileScreen() {
             type="caption"
             style={[styles.sectionTitle, { color: theme.textSecondary }]}
           >
-            ACCOUNT INFORMATION
+            معلومات الحساب
           </ThemedText>
 
           <View
@@ -115,7 +118,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.cardContent}>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Full Name
+                  الاسم الكامل
                 </ThemedText>
                 <ThemedText type="body">{user?.full_name}</ThemedText>
               </View>
@@ -129,7 +132,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.cardContent}>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Email
+                  البريد الإلكتروني
                 </ThemedText>
                 <ThemedText type="body">{user?.email}</ThemedText>
               </View>
@@ -143,7 +146,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.cardContent}>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Phone
+                  رقم الهاتف
                 </ThemedText>
                 <ThemedText type="body">{user?.phone_number}</ThemedText>
               </View>
@@ -157,7 +160,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.cardContent}>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Role
+                  الدور
                 </ThemedText>
                 <ThemedText type="body">
                   {getRoleLabel(user?.role || "")}
@@ -172,7 +175,7 @@ export default function ProfileScreen() {
             type="caption"
             style={[styles.sectionTitle, { color: theme.textSecondary }]}
           >
-            ACTIONS
+            الإجراءات
           </ThemedText>
 
           <Pressable
@@ -184,8 +187,8 @@ export default function ProfileScreen() {
           >
             <View style={styles.actionButtonContent}>
               <LogOut size={20} color="#EF4444" />
-              <ThemedText type="body" style={{ color: "#EF4444", marginLeft: Spacing.md }}>
-                Sign Out
+              <ThemedText type="body" style={{ color: "#EF4444", marginRight: Spacing.md }}>
+                تسجيل الخروج
               </ThemedText>
             </View>
             <ChevronRight size={20} color={theme.textSecondary} />
@@ -231,8 +234,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.md,
-    marginLeft: Spacing.xs,
+    marginRight: Spacing.xs,
     fontWeight: "600",
+    textAlign: "right",
   },
   card: {
     borderRadius: BorderRadius.sm,
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    marginLeft: 56,
+    marginRight: 56,
   },
   actionButton: {
     flexDirection: "row",

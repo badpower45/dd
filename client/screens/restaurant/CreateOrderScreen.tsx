@@ -6,6 +6,7 @@ import {
   Alert,
   ActivityIndicator,
   Pressable,
+  I18nManager,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -21,6 +22,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createOrder } from "@/lib/storage";
 import { CustomerGeo } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 const CAIRO_FALLBACK: CustomerGeo = { lat: 30.0444, lng: 31.2357 };
 
@@ -61,7 +65,7 @@ export default function CreateOrderScreen() {
   const handleSubmit = async () => {
     if (!user) return;
     if (!isValid) {
-      Alert.alert("Error", "Please fill in all required fields");
+      Alert.alert("خطأ", "يرجى ملء جميع الحقول المطلوبة");
       return;
     }
 
@@ -81,7 +85,7 @@ export default function CreateOrderScreen() {
       );
       navigation.goBack();
     } catch (error) {
-      Alert.alert("Error", "Failed to create order. Please try again.");
+      Alert.alert("خطأ", "فشل في إنشاء الطلب. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +105,7 @@ export default function CreateOrderScreen() {
         >
           <X size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">New Order</ThemedText>
+        <ThemedText type="h3">طلب جديد</ThemedText>
         <Pressable
           style={[styles.headerButton, !isValid && { opacity: 0.5 }]}
           onPress={handleSubmit}
@@ -124,12 +128,12 @@ export default function CreateOrderScreen() {
       >
         <View style={styles.section}>
           <ThemedText type="h4" style={styles.sectionTitle}>
-            Customer Information
+            معلومات العميل
           </ThemedText>
 
           <View style={styles.inputGroup}>
             <ThemedText type="small" style={styles.label}>
-              Customer Name *
+              اسم العميل *
             </ThemedText>
             <TextInput
               style={[
@@ -138,18 +142,19 @@ export default function CreateOrderScreen() {
                   backgroundColor: theme.backgroundDefault,
                   borderColor: theme.border,
                   color: theme.text,
+                  textAlign: "right",
                 },
               ]}
               value={customerName}
               onChangeText={setCustomerName}
-              placeholder="Enter customer name"
+              placeholder="أدخل اسم العميل"
               placeholderTextColor={theme.textSecondary}
             />
           </View>
 
           <View style={styles.inputGroup}>
             <ThemedText type="small" style={styles.label}>
-              Primary Phone *
+              رقم الهاتف الأساسي *
             </ThemedText>
             <TextInput
               style={[
@@ -158,11 +163,12 @@ export default function CreateOrderScreen() {
                   backgroundColor: theme.backgroundDefault,
                   borderColor: theme.border,
                   color: theme.text,
+                  textAlign: "right",
                 },
               ]}
               value={phonePrimary}
               onChangeText={setPhonePrimary}
-              placeholder="Enter phone number"
+              placeholder="أدخل رقم الهاتف"
               placeholderTextColor={theme.textSecondary}
               keyboardType="phone-pad"
             />
@@ -170,7 +176,7 @@ export default function CreateOrderScreen() {
 
           <View style={styles.inputGroup}>
             <ThemedText type="small" style={styles.label}>
-              Secondary Phone
+              رقم الهاتف الثانوي
             </ThemedText>
             <TextInput
               style={[
@@ -179,11 +185,12 @@ export default function CreateOrderScreen() {
                   backgroundColor: theme.backgroundDefault,
                   borderColor: theme.border,
                   color: theme.text,
+                  textAlign: "right",
                 },
               ]}
               value={phoneSecondary}
               onChangeText={setPhoneSecondary}
-              placeholder="Optional"
+              placeholder="اختياري"
               placeholderTextColor={theme.textSecondary}
               keyboardType="phone-pad"
             />
@@ -192,12 +199,12 @@ export default function CreateOrderScreen() {
 
         <View style={styles.section}>
           <ThemedText type="h4" style={styles.sectionTitle}>
-            Delivery Address
+            عنوان التوصيل
           </ThemedText>
 
           <View style={styles.inputGroup}>
             <ThemedText type="small" style={styles.label}>
-              Address *
+              العنوان *
             </ThemedText>
             <TextInput
               style={[
@@ -207,11 +214,12 @@ export default function CreateOrderScreen() {
                   backgroundColor: theme.backgroundDefault,
                   borderColor: theme.border,
                   color: theme.text,
+                  textAlign: "right",
                 },
               ]}
               value={customerAddress}
               onChangeText={setCustomerAddress}
-              placeholder="Enter full delivery address"
+              placeholder="أدخل عنوان التوصيل الكامل"
               placeholderTextColor={theme.textSecondary}
               multiline
               numberOfLines={3}
@@ -222,12 +230,12 @@ export default function CreateOrderScreen() {
 
         <View style={styles.section}>
           <ThemedText type="h4" style={styles.sectionTitle}>
-            Payment Details
+            تفاصيل الدفع
           </ThemedText>
 
           <View style={styles.inputGroup}>
             <ThemedText type="small" style={styles.label}>
-              Collection Amount *
+              مبلغ التحصيل *
             </ThemedText>
             <TextInput
               style={[
@@ -236,11 +244,12 @@ export default function CreateOrderScreen() {
                   backgroundColor: theme.backgroundDefault,
                   borderColor: theme.border,
                   color: theme.text,
+                  textAlign: "right",
                 },
               ]}
               value={collectionAmount}
               onChangeText={setCollectionAmount}
-              placeholder="0.00"
+              placeholder="٠.٠٠"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
             />
@@ -253,9 +262,9 @@ export default function CreateOrderScreen() {
             ]}
           >
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Delivery Fee
+              رسوم التوصيل
             </ThemedText>
-            <ThemedText type="h4">${deliveryFee.toFixed(2)}</ThemedText>
+            <ThemedText type="h4">{deliveryFee.toFixed(2)} ر.س</ThemedText>
           </View>
 
           {collectionAmount ? (
@@ -263,13 +272,13 @@ export default function CreateOrderScreen() {
               style={[styles.totalDisplay, { backgroundColor: theme.link }]}
             >
               <ThemedText type="small" style={{ color: "#FFFFFF" }}>
-                Total
+                الإجمالي
               </ThemedText>
               <ThemedText
                 type="h3"
                 style={{ color: "#FFFFFF", fontWeight: "700" }}
               >
-                ${(parseFloat(collectionAmount) + deliveryFee).toFixed(2)}
+                {(parseFloat(collectionAmount) + deliveryFee).toFixed(2)} ر.س
               </ThemedText>
             </View>
           ) : null}
@@ -280,7 +289,7 @@ export default function CreateOrderScreen() {
           disabled={!isValid || isSubmitting}
           style={styles.submitButton}
         >
-          {isSubmitting ? "Creating..." : "Create Order"}
+          {isSubmitting ? "جاري الإنشاء..." : "إنشاء الطلب"}
         </Button>
       </KeyboardAwareScrollViewCompat>
     </ThemedView>
