@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
 const log = console.log;
@@ -167,9 +168,27 @@ function configureExpoAndLanding(app: express.Application) {
 
   log("Serving static Expo files with dynamic manifest routing");
 
+  // Proxy requests to Metro bundler for web app
+  const metroProxy = createProxyMiddleware({
+    target: "http://localhost:8081",
+    changeOrigin: true,
+    ws: true,
+  });
+
+  // Proxy all web app routes to Metro bundler
+  app.use("/web", metroProxy);
+
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
       return next();
+    }
+
+    // Proxy Metro bundler specific routes
+    if (req.path.startsWith("/node_modules") || 
+        req.path.endsWith(".bundle") || req.path.startsWith("/hot") ||
+        req.path.startsWith("/_expo") || req.path.startsWith("/logs") ||
+        req.path.startsWith("/debugger")) {
+      return metroProxy(req, res, next);
     }
 
     if (req.path !== "/" && req.path !== "/manifest") {
