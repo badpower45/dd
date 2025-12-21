@@ -15,7 +15,7 @@ import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const linking = {
-  prefixes: [Linking.createURL("/")],
+  prefixes: [Linking.createURL ? Linking.createURL("/") : "/"],
   config: {
     screens: {
       Login: "login",

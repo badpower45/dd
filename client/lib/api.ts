@@ -8,8 +8,8 @@ const getBaseUrl = () => {
     // For Android emulator use 10.0.2.2, for iOS simulator use localhost
     // If running on physical device, replace with your machine's local IP
     return Platform.OS === "android"
-        ? "http://10.0.2.2:5000"
-        : "http://localhost:5000";
+        ? "http://10.0.2.2:5001"
+        : "http://localhost:5001";
 };
 
 export const BASE_URL = getBaseUrl();
