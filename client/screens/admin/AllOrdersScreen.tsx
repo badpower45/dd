@@ -17,7 +17,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
-import { getOrders, seedDemoOrders } from "@/lib/storage";
+
+import { api } from "@/lib/api";
 import { Order, OrderStatus } from "@/lib/types";
 import { Spacing, BorderRadius, StatusColors } from "@/constants/theme";
 
@@ -44,8 +45,7 @@ export default function AllOrdersScreen() {
 
   const loadOrders = async () => {
     try {
-      await seedDemoOrders("restaurant-001");
-      const data = await getOrders();
+      const data = await api.orders.list();
       setOrders(data);
     } catch (error) {
       console.error("Error loading orders:", error);
@@ -81,7 +81,7 @@ export default function AllOrdersScreen() {
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <ThemedText type="h3" numberOfLines={1}>
-            {item.customer_name}
+            {item.customerName}
           </ThemedText>
           <View style={styles.timeRow}>
             <Clock size={14} color={theme.textSecondary} />
@@ -89,7 +89,7 @@ export default function AllOrdersScreen() {
               type="caption"
               style={{ color: theme.textSecondary, marginRight: Spacing.xs }}
             >
-              {formatTime(item.created_at)}
+              {formatTime(item.createdAt)}
             </ThemedText>
           </View>
         </View>
@@ -103,7 +103,7 @@ export default function AllOrdersScreen() {
           style={[styles.cardText, { color: theme.textSecondary }]}
           numberOfLines={2}
         >
-          {item.customer_address}
+          {item.customerAddress}
         </ThemedText>
       </View>
 
@@ -113,19 +113,19 @@ export default function AllOrdersScreen() {
           type="small"
           style={[styles.cardText, { color: theme.textSecondary }]}
         >
-          {item.phone_primary}
+          {item.phonePrimary}
         </ThemedText>
       </View>
 
       <View style={styles.cardFooter}>
         <View style={styles.amountContainer}>
           <ThemedText type="h3" style={{ color: theme.link }}>
-            {item.collection_amount.toFixed(2)} ر.س
+            {item.collectionAmount.toFixed(2)} ر.س
           </ThemedText>
         </View>
-        {item.delivery_window ? (
+        {item.deliveryWindow ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {item.delivery_window}
+            {item.deliveryWindow}
           </ThemedText>
         ) : null}
       </View>
@@ -201,7 +201,7 @@ export default function AllOrdersScreen() {
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={filteredOrders}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderOrderCard}
         ListHeaderComponent={renderHeader}
         refreshControl={

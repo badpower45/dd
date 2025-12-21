@@ -16,7 +16,8 @@ import {
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
-import { getOrders, seedDemoOrders } from "@/lib/storage";
+
+import { api } from "@/lib/api";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows, StatusColors } from "@/constants/theme";
 
@@ -34,8 +35,7 @@ export default function DashboardScreen() {
 
   const loadData = async () => {
     try {
-      await seedDemoOrders("restaurant-001");
-      const data = await getOrders();
+      const data = await api.orders.list();
       setOrders(data);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -62,7 +62,7 @@ export default function DashboardScreen() {
     delivered: orders.filter((o) => o.status === "delivered").length,
     totalRevenue: orders
       .filter((o) => o.status === "delivered")
-      .reduce((sum, o) => sum + o.collection_amount, 0),
+      .reduce((sum, o) => sum + o.collectionAmount, 0),
   };
 
   const StatCard = ({

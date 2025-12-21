@@ -23,7 +23,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
-import { getPendingOrders, subscribeToDriverLocations } from "@/lib/storage";
+
+import { api } from "@/lib/api";
 import { Order, Profile } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
@@ -38,22 +39,40 @@ export default function MapScreen() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const loadOrders = async () => {
-    const pending = await getPendingOrders();
-    setOrders(pending);
+    try {
+      const allOrders = await api.orders.list();
+      setOrders(allOrders.filter((o: Order) => o.status === "pending"));
+    } catch (error) {
+      console.error("Failed to load orders", error);
+    }
+  };
+
+  const loadDrivers = async () => {
+    try {
+      const activeDrivers = await api.drivers.getActive();
+      setDrivers(activeDrivers);
+    } catch (error) {
+      console.error("Failed to load drivers", error);
+    }
   };
 
   useFocusEffect(
     useCallback(() => {
       loadOrders();
+      loadDrivers();
+
+      // Poll for updates every 30s while focused
+      const interval = setInterval(() => {
+        loadOrders();
+        loadDrivers();
+      }, 30000);
+
+      return () => clearInterval(interval);
     }, []),
   );
 
-  useEffect(() => {
-    const unsubscribe = subscribeToDriverLocations((updatedDrivers) => {
-      setDrivers(updatedDrivers);
-    });
-    return () => unsubscribe();
-  }, []);
+  // No longer using useEffect for legacy subscription
+  // useEffect(() => { ... }, []);
 
   const getDriverMarkerColor = (status?: string) => {
     if (status === "available") return "#10B981";
@@ -61,8 +80,8 @@ export default function MapScreen() {
     return "#6B7280";
   };
 
-  const availableDrivers = drivers.filter(d => d.driver_status === "available");
-  const busyDrivers = drivers.filter(d => d.driver_status === "busy");
+  const availableDrivers = drivers.filter(d => d.driverStatus === "available");
+  const busyDrivers = drivers.filter(d => d.driverStatus === "busy");
 
   const handleAssignOrder = () => {
     if (selectedOrder) {
@@ -108,12 +127,12 @@ export default function MapScreen() {
           showsMyLocationButton
         >
           {orders.map((order) =>
-            order.customer_geo ? (
+            order.customerGeo ? (
               <Marker
                 key={order.id}
                 coordinate={{
-                  latitude: order.customer_geo.lat,
-                  longitude: order.customer_geo.lng,
+                  latitude: order.customerGeo.lat,
+                  longitude: order.customerGeo.lng,
                 }}
                 onPress={() => setSelectedOrder(order)}
               >
@@ -125,17 +144,17 @@ export default function MapScreen() {
           )}
 
           {drivers.map((driver) =>
-            driver.current_location ? (
+            driver.currentLocation ? (
               <Marker
                 key={driver.id}
                 coordinate={{
-                  latitude: driver.current_location.lat,
-                  longitude: driver.current_location.lng,
+                  latitude: driver.currentLocation.lat,
+                  longitude: driver.currentLocation.lng,
                 }}
-                title={driver.full_name || "سائق"}
+                title={driver.fullName || "سائق"}
               >
-                <View style={[styles.driverMarker, { backgroundColor: `${getDriverMarkerColor(driver.driver_status)}20` }]}>
-                  <Truck size={20} color={getDriverMarkerColor(driver.driver_status)} />
+                <View style={[styles.driverMarker, { backgroundColor: `${getDriverMarkerColor(driver.driverStatus)}20` }]}>
+                  <Truck size={20} color={getDriverMarkerColor(driver.driverStatus)} />
                 </View>
               </Marker>
             ) : null
@@ -181,14 +200,14 @@ export default function MapScreen() {
           <View style={styles.orderCardHeader}>
             <View style={{ flex: 1 }}>
               <ThemedText type="h3" numberOfLines={1}>
-                {selectedOrder.customer_name}
+                {selectedOrder.customerName}
               </ThemedText>
               <ThemedText
                 type="small"
                 style={{ color: theme.textSecondary }}
                 numberOfLines={1}
               >
-                {selectedOrder.customer_address}
+                {selectedOrder.customerAddress}
               </ThemedText>
             </View>
             <Pressable
@@ -203,7 +222,7 @@ export default function MapScreen() {
             <View style={styles.detailRow}>
               <StatusBadge status={selectedOrder.status} />
               <ThemedText type="h4" style={{ color: theme.link }}>
-                {selectedOrder.collection_amount.toFixed(2)} ر.س
+                {selectedOrder.collectionAmount.toFixed(2)} ر.س
               </ThemedText>
             </View>
           </View>

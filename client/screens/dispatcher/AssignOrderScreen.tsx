@@ -25,33 +25,15 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
-import { assignOrder } from "@/lib/storage";
+import { api } from "@/lib/api";
 import { Order, Profile } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
-const DEMO_DRIVERS: Profile[] = [
-  {
-    id: "driver-001",
-    role: "driver",
-    full_name: "محمد السائق",
-    phone_number: "+966501234567",
-  },
-  {
-    id: "driver-002",
-    role: "driver",
-    full_name: "أحمد الريس",
-    phone_number: "+966502345678",
-  },
-  {
-    id: "driver-003",
-    role: "driver",
-    full_name: "خالد المشرف",
-    phone_number: "+966503456789",
-  },
-];
+// Drivers fetched from API
+
 
 type RouteParams = {
   AssignOrder: { order: Order };
@@ -65,9 +47,22 @@ export default function AssignOrderScreen() {
 
   const order = route.params?.order;
 
+  const [drivers, setDrivers] = useState<Profile[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<Profile | null>(null);
   const [deliveryWindow, setDeliveryWindow] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const data = await api.users.list("driver");
+        setDrivers(data);
+      } catch (error) {
+        console.error("Failed to fetch drivers", error);
+      }
+    };
+    fetchDrivers();
+  }, []);
 
   const isValid = selectedDriver && deliveryWindow.trim();
 
@@ -76,7 +71,12 @@ export default function AssignOrderScreen() {
 
     setIsSubmitting(true);
     try {
-      await assignOrder(order.id, selectedDriver.id, deliveryWindow.trim());
+      await api.orders.update(order.id, {
+        driverId: selectedDriver.id,
+        deliveryWindow: deliveryWindow.trim(),
+        status: "assigned"
+      });
+
       Alert.alert("تم بنجاح", "تم تعيين الطلب للسائق", [
         { text: "حسناً", onPress: () => navigation.goBack() },
       ]);
@@ -140,7 +140,7 @@ export default function AssignOrderScreen() {
           >
             <View style={styles.orderRow}>
               <View style={{ flex: 1 }}>
-                <ThemedText type="h3">{order.customer_name}</ThemedText>
+                <ThemedText type="h3">{order.customerName}</ThemedText>
               </View>
               <StatusBadge status={order.status} />
             </View>
@@ -151,7 +151,7 @@ export default function AssignOrderScreen() {
                 type="small"
                 style={{ color: theme.textSecondary, marginLeft: Spacing.sm, flex: 1 }}
               >
-                {order.customer_address}
+                {order.customerAddress}
               </ThemedText>
             </View>
 
@@ -161,7 +161,7 @@ export default function AssignOrderScreen() {
                 type="small"
                 style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}
               >
-                {order.phone_primary}
+                {order.phonePrimary}
               </ThemedText>
             </View>
 
@@ -171,7 +171,7 @@ export default function AssignOrderScreen() {
                 type="h4"
                 style={{ color: theme.link, marginRight: Spacing.sm }}
               >
-                {order.collection_amount.toFixed(2)} ر.س
+                {order.collectionAmount.toFixed(2)} ر.س
               </ThemedText>
             </View>
           </View>
@@ -182,7 +182,7 @@ export default function AssignOrderScreen() {
             اختر السائق
           </ThemedText>
 
-          {DEMO_DRIVERS.map((driver) => (
+          {drivers.map((driver) => (
             <Pressable
               key={driver.id}
               style={[
@@ -216,10 +216,10 @@ export default function AssignOrderScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <ThemedText type="body" style={{ fontWeight: "600" }}>
-                  {driver.full_name}
+                  {driver.fullName}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  {driver.phone_number}
+                  {driver.phoneNumber}
                 </ThemedText>
               </View>
               {selectedDriver?.id === driver.id ? (

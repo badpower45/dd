@@ -10,14 +10,15 @@ export type OrderStatus =
 export type DriverStatus = "available" | "busy" | "offline";
 
 export interface Profile {
-  id: string;
+  id: number;
   role: UserRole;
-  full_name: string;
-  phone_number: string;
+  fullName: string;
+  phoneNumber: string;
   email?: string;
-  created_at?: string;
-  current_location?: CustomerGeo | null;
-  driver_status?: DriverStatus;
+  createdAt?: string;
+  currentLocation?: CustomerGeo | null;
+  driverStatus?: DriverStatus;
+  balance?: number; // Added from backend
 }
 
 export interface CustomerGeo {
@@ -26,19 +27,19 @@ export interface CustomerGeo {
 }
 
 export interface Order {
-  id: string;
-  created_at: string;
-  restaurant_id: string;
-  driver_id: string | null;
-  customer_name: string;
-  customer_address: string;
-  customer_geo: CustomerGeo | null;
-  phone_primary: string;
-  phone_secondary: string | null;
-  collection_amount: number;
-  delivery_fee: number;
+  id: number;
+  createdAt: string;
+  restaurantId: number;
+  driverId: number | null;
+  customerName: string;
+  customerAddress: string;
+  customerGeo: CustomerGeo | null;
+  phonePrimary: string; // customerPhone in backend
+  phoneSecondary: string | null;
+  collectionAmount: number;
+  deliveryFee: number;
   status: OrderStatus;
-  delivery_window: string | null;
+  deliveryWindow: string | null;
   restaurant?: Profile;
   driver?: Profile;
 }

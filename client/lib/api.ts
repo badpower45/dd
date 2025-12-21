@@ -56,4 +56,9 @@ export const api = {
         create: (body: any) => apiRequest("POST", "/api/orders", body),
         update: (id: number, body: any) => apiRequest("PATCH", `/api/orders/${id}`, body),
     },
+    drivers: {
+        updateLocation: (userId: number, lat: number, lng: number) =>
+            apiRequest("POST", "/api/drivers/location", { userId, lat: String(lat), lng: String(lng) }),
+        getActive: () => apiRequest("GET", "/api/drivers/active"),
+    }
 };

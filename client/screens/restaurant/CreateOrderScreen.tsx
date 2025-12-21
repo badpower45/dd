@@ -19,7 +19,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { createOrder } from "@/lib/storage";
+import { api } from "@/lib/api";
 import { CustomerGeo } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
@@ -72,17 +72,16 @@ export default function CreateOrderScreen() {
     setIsSubmitting(true);
     try {
       const customerGeo = await geocodeAddress(customerAddress.trim());
-      await createOrder(
-        {
-          customer_name: customerName.trim(),
-          customer_address: customerAddress.trim(),
-          customer_geo: customerGeo,
-          phone_primary: phonePrimary.trim(),
-          phone_secondary: phoneSecondary.trim() || undefined,
-          collection_amount: parseFloat(collectionAmount) || 0,
-        },
-        user.id,
-      );
+      await api.orders.create({
+        restaurantId: user.id,
+        customerName: customerName.trim(),
+        customerAddress: customerAddress.trim(),
+        customerGeo: customerGeo,
+        phonePrimary: phonePrimary.trim(),
+        phoneSecondary: phoneSecondary.trim() || undefined,
+        collectionAmount: parseFloat(collectionAmount) || 0,
+        deliveryFee: 5.0, // Should be dynamic or from config
+      });
       navigation.goBack();
     } catch (error) {
       Alert.alert("خطأ", "فشل في إنشاء الطلب. يرجى المحاولة مرة أخرى.");

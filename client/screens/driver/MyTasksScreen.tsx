@@ -32,15 +32,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  getOrdersByDriver, 
-  updateOrderStatus, 
-  seedDemoOrders,
-  updateDriverLocation,
-  updateDriverStatus,
-  notifyDriverLocationUpdate,
-} from "@/lib/storage";
-import { Order, OrderStatus, DriverStatus } from "@/lib/types";
+import { api } from "@/lib/api";
+import { Order, OrderStatus } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
@@ -65,8 +58,7 @@ export default function MyTasksScreen() {
   const loadOrders = async () => {
     if (!user) return;
     try {
-      await seedDemoOrders("restaurant-001");
-      const data = await getOrdersByDriver(user.id);
+      const data = await api.orders.list({ driverId: user.id });
       setOrders(data);
     } catch (error) {
       console.error("Error loading orders:", error);
@@ -90,20 +82,19 @@ export default function MyTasksScreen() {
 
   const handleToggleOnline = async (value: boolean) => {
     if (!user) return;
-    
+
     onlineIntentRef.current = value;
-    
+
     if (!value) {
       stopLocationTracking();
       setIsOnline(false);
-      await updateDriverStatus(user.id, "offline");
-      await notifyDriverLocationUpdate();
+      // await updateDriverStatus(user.id, "offline"); // TODO: Add API for status update
       return;
     }
 
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (!onlineIntentRef.current) return;
-    
+
     if (status !== "granted") {
       Alert.alert("تم رفض الإذن", "إذن الموقع مطلوب للاتصال بالإنترنت");
       setIsOnline(false);
@@ -119,26 +110,28 @@ export default function MyTasksScreen() {
         },
         (location) => {
           if (user && onlineIntentRef.current) {
-            updateDriverLocation(user.id, {
-              lat: location.coords.latitude,
-              lng: location.coords.longitude,
-            }).then(() => notifyDriverLocationUpdate());
+            api.drivers.updateLocation(
+              user.id,
+              location.coords.latitude,
+              location.coords.longitude
+            ).catch(err => console.error("Loc update failed", err));
           }
         }
       );
-      
+
       if (!onlineIntentRef.current) {
         subscription.remove();
         return;
       }
-      
+
       locationSubscription.current = subscription;
       setIsOnline(true);
-      
-      await updateDriverStatus(user.id, "available");
+
+      // We assume location update marks them explicitly or implicitly active
+
       if (!onlineIntentRef.current) return;
-      
-      await notifyDriverLocationUpdate();
+
+      // await notifyDriverLocationUpdate(); // API handles this via Realtime/Websockets
     } catch (error) {
       console.error("Failed to start location tracking:", error);
       stopLocationTracking();
@@ -159,9 +152,9 @@ export default function MyTasksScreen() {
     setRefreshing(false);
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+  const handleUpdateStatus = async (orderId: number, newStatus: OrderStatus) => {
     try {
-      await updateOrderStatus(orderId, newStatus);
+      await api.orders.update(orderId, { status: newStatus });
       await loadOrders();
       Alert.alert(
         "تم بنجاح",
@@ -175,11 +168,11 @@ export default function MyTasksScreen() {
   };
 
   const handleOpenMaps = (order: Order) => {
-    if (order.customer_geo) {
-      const url = `https://maps.google.com/?q=${order.customer_geo.lat},${order.customer_geo.lng}`;
+    if (order.customerGeo) {
+      const url = `https://maps.google.com/?q=${order.customerGeo.lat},${order.customerGeo.lng}`;
       Linking.openURL(url);
     } else {
-      const encoded = encodeURIComponent(order.customer_address);
+      const encoded = encodeURIComponent(order.customerAddress);
       Linking.openURL(`https://maps.google.com/?q=${encoded}`);
     }
   };
@@ -198,16 +191,16 @@ export default function MyTasksScreen() {
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <ThemedText type="h3" numberOfLines={1}>
-            {item.customer_name}
+            {item.customerName}
           </ThemedText>
-          {item.delivery_window ? (
+          {item.deliveryWindow ? (
             <View style={styles.timeRow}>
               <Clock size={14} color={theme.textSecondary} />
               <ThemedText
                 type="caption"
                 style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}
               >
-                {item.delivery_window}
+                {item.deliveryWindow}
               </ThemedText>
             </View>
           ) : null}
@@ -222,18 +215,18 @@ export default function MyTasksScreen() {
           style={[styles.cardText, { color: theme.textSecondary }]}
           numberOfLines={2}
         >
-          {item.customer_address}
+          {item.customerAddress}
         </ThemedText>
       </View>
 
       <View style={styles.cardRow}>
         <Phone size={16} color={theme.textSecondary} />
-        <Pressable onPress={() => Linking.openURL(`tel:${item.phone_primary}`)}>
+        <Pressable onPress={() => Linking.openURL(`tel:${item.phonePrimary}`)}>
           <ThemedText
             type="small"
             style={{ color: theme.link, marginLeft: Spacing.sm }}
           >
-            {item.phone_primary}
+            {item.phonePrimary}
           </ThemedText>
         </Pressable>
       </View>
@@ -242,7 +235,7 @@ export default function MyTasksScreen() {
         <View style={styles.amountContainer}>
           <DollarSign size={20} color={theme.link} />
           <ThemedText type="h2" style={{ color: theme.link }}>
-            {item.collection_amount.toFixed(2)}
+            {item.collectionAmount.toFixed(2)}
           </ThemedText>
         </View>
       </View>

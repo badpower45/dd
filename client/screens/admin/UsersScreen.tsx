@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, FlatList, StyleSheet, Pressable, I18nManager } from "react-native";
+import { View, FlatList, StyleSheet, Pressable, I18nManager, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -8,56 +8,14 @@ import { Phone, Mail } from "lucide-react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
+import { api } from "@/lib/api";
 import { Profile, UserRole } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
-const DEMO_USERS: Profile[] = [
-  {
-    id: "admin-001",
-    role: "admin",
-    full_name: "أحمد المدير",
-    phone_number: "+966501234567",
-    email: "admin@demo.com",
-  },
-  {
-    id: "dispatcher-001",
-    role: "dispatcher",
-    full_name: "سارة المُنسقة",
-    phone_number: "+966501234568",
-    email: "dispatcher@demo.com",
-  },
-  {
-    id: "restaurant-001",
-    role: "restaurant",
-    full_name: "مطعم البيتزا",
-    phone_number: "+966501234569",
-    email: "restaurant@demo.com",
-  },
-  {
-    id: "driver-001",
-    role: "driver",
-    full_name: "محمد السائق",
-    phone_number: "+966501234570",
-    email: "driver@demo.com",
-  },
-  {
-    id: "driver-002",
-    role: "driver",
-    full_name: "عبدالله الحربي",
-    phone_number: "+966501234571",
-    email: "abdullah@demo.com",
-  },
-  {
-    id: "driver-003",
-    role: "driver",
-    full_name: "خالد الشمري",
-    phone_number: "+966501234572",
-    email: "khaled@demo.com",
-  },
-];
+
 
 const ROLE_FILTERS: { label: string; value: UserRole | "all" }[] = [
   { label: "الكل", value: "all" },
@@ -73,10 +31,30 @@ export default function UsersScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
 
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<UserRole | "all">("all");
 
-  const filteredUsers =
-    filter === "all" ? DEMO_USERS : DEMO_USERS.filter((u) => u.role === filter);
+  const loadUsers = async () => {
+    try {
+      // If API supports filtering by role:
+      const roleFilter = filter === "all" ? undefined : filter;
+      const data = await api.users.list(roleFilter);
+      setUsers(data);
+    } catch (error) {
+      console.error("Failed to load users", error);
+    }
+  };
+
+  React.useEffect(() => {
+    loadUsers();
+  }, [filter]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadUsers();
+    setRefreshing(false);
+  };
 
   const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
@@ -110,11 +88,11 @@ export default function UsersScreen() {
           ]}
         >
           <ThemedText type="h4" style={{ color: "#FFFFFF" }}>
-            {item.full_name.charAt(0).toUpperCase()}
+            {item.fullName.charAt(0).toUpperCase()}
           </ThemedText>
         </View>
         <View style={{ flex: 1 }}>
-          <ThemedText type="h3">{item.full_name}</ThemedText>
+          <ThemedText type="h3">{item.fullName}</ThemedText>
           <View
             style={[
               styles.roleBadge,
@@ -147,7 +125,7 @@ export default function UsersScreen() {
           type="small"
           style={{ color: theme.textSecondary, marginRight: Spacing.sm }}
         >
-          {item.phone_number}
+          {item.phoneNumber}
         </ThemedText>
       </View>
     </View>
@@ -195,8 +173,11 @@ export default function UsersScreen() {
           },
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
-        data={filteredUsers}
-        keyExtractor={(item) => item.id}
+        data={users}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderUserCard}
         ListHeaderComponent={renderHeader}
         ItemSeparatorComponent={() => <View style={styles.separator} />}

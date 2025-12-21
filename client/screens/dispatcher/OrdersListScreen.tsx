@@ -17,9 +17,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
-import { getPendingOrders, seedDemoOrders } from "@/lib/storage";
+import { api } from "@/lib/api";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { useOrderSubscription } from "@/hooks/useOrderSubscription";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -31,15 +32,19 @@ export default function OrdersListScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
 
+  // Enable Real-time updates
+  useOrderSubscription();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadOrders = async () => {
     try {
-      await seedDemoOrders("restaurant-001");
-      const data = await getPendingOrders();
-      setOrders(data);
+      // Fetch pending orders (API generic list for now, ideally filter status=pending)
+      const data = await api.orders.list();
+      // Filter client side as API returns all
+      setOrders(data.filter((o: Order) => o.status === 'pending'));
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -79,7 +84,7 @@ export default function OrdersListScreen() {
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <ThemedText type="h3" numberOfLines={1}>
-            {item.customer_name}
+            {item.customerName}
           </ThemedText>
           <View style={styles.timeRow}>
             <Clock size={14} color={theme.textSecondary} />
@@ -87,7 +92,7 @@ export default function OrdersListScreen() {
               type="caption"
               style={{ color: theme.textSecondary, marginRight: Spacing.xs }}
             >
-              أُنشئ {formatTime(item.created_at)}
+              أُنشئ {formatTime(item.createdAt)}
             </ThemedText>
           </View>
         </View>
@@ -101,7 +106,7 @@ export default function OrdersListScreen() {
           style={[styles.cardText, { color: theme.textSecondary }]}
           numberOfLines={2}
         >
-          {item.customer_address}
+          {item.customerAddress}
         </ThemedText>
       </View>
 
@@ -111,7 +116,7 @@ export default function OrdersListScreen() {
           type="small"
           style={[styles.cardText, { color: theme.textSecondary }]}
         >
-          {item.phone_primary}
+          {item.phonePrimary}
         </ThemedText>
       </View>
 
@@ -119,7 +124,7 @@ export default function OrdersListScreen() {
         <View style={styles.amountContainer}>
           <DollarSign size={16} color={theme.link} />
           <ThemedText type="h3" style={{ color: theme.link }}>
-            {item.collection_amount.toFixed(2)}
+            {item.collectionAmount.toFixed(2)}
           </ThemedText>
         </View>
         <View style={styles.assignButton}>
@@ -162,7 +167,7 @@ export default function OrdersListScreen() {
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={orders}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderOrderCard}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

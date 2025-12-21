@@ -80,11 +80,11 @@ export default function ProfileScreen() {
             ]}
           >
             <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
-              {user?.full_name?.charAt(0) || "م"}
+              {user?.fullName?.charAt(0) || "م"}
             </ThemedText>
           </View>
           <ThemedText type="h2" style={styles.userName}>
-            {user?.full_name}
+            {user?.fullName}
           </ThemedText>
           <View
             style={[
@@ -120,7 +120,7 @@ export default function ProfileScreen() {
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   الاسم الكامل
                 </ThemedText>
-                <ThemedText type="body">{user?.full_name}</ThemedText>
+                <ThemedText type="body">{user?.fullName}</ThemedText>
               </View>
             </View>
 
@@ -148,7 +148,7 @@ export default function ProfileScreen() {
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   رقم الهاتف
                 </ThemedText>
-                <ThemedText type="body">{user?.phone_number}</ThemedText>
+                <ThemedText type="body">{user?.phoneNumber}</ThemedText>
               </View>
             </View>
 

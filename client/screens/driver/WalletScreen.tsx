@@ -10,7 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDriverTodayDeliveries, getOrdersByDriver } from "@/lib/storage";
+import { api } from "@/lib/api";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
@@ -32,12 +32,18 @@ export default function WalletScreen() {
   const loadData = async () => {
     if (!user) return;
     try {
-      const today = await getDriverTodayDeliveries(user.id);
-      setTodayDeliveries(today);
-
-      const all = await getOrdersByDriver(user.id);
-      const delivered = all.filter((o) => o.status === "delivered");
+      const all = await api.orders.list({ driverId: user.id });
+      const delivered = all.filter((o: Order) => o.status === "delivered");
       setAllDeliveries(delivered);
+
+      // Filter for today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayOrders = delivered.filter((o: Order) => {
+        const orderDate = new Date(o.createdAt);
+        return orderDate >= today;
+      });
+      setTodayDeliveries(todayOrders);
     } catch (error) {
       console.error("Error loading wallet data:", error);
     } finally {
@@ -58,12 +64,12 @@ export default function WalletScreen() {
   };
 
   const todayTotal = todayDeliveries.reduce(
-    (sum, order) => sum + order.collection_amount,
+    (sum, order) => sum + order.collectionAmount,
     0,
   );
 
   const allTimeTotal = allDeliveries.reduce(
-    (sum, order) => sum + order.collection_amount,
+    (sum, order) => sum + order.collectionAmount,
     0,
   );
 
@@ -78,14 +84,14 @@ export default function WalletScreen() {
     >
       <View style={styles.deliveryInfo}>
         <ThemedText type="body" style={{ fontWeight: "600" }}>
-          {item.customer_name}
+          {item.customerName}
         </ThemedText>
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          {formatTime(item.created_at)}
+          {formatTime(item.createdAt)}
         </ThemedText>
       </View>
       <ThemedText type="h4" style={{ color: theme.link }}>
-        {item.collection_amount.toFixed(2)} ر.س
+        {item.collectionAmount.toFixed(2)} ر.س
       </ThemedText>
     </View>
   );
@@ -175,7 +181,7 @@ export default function WalletScreen() {
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={todayDeliveries}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderDeliveryItem}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={loading ? null : renderEmptyState}

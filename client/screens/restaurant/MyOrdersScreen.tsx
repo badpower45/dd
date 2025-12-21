@@ -18,7 +18,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { getOrdersByRestaurant, seedDemoOrders } from "@/lib/storage";
+import { api } from "@/lib/api";
 import { Order } from "@/lib/types";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
@@ -39,8 +39,7 @@ export default function MyOrdersScreen() {
   const loadOrders = async () => {
     if (!user) return;
     try {
-      await seedDemoOrders(user.id);
-      const data = await getOrdersByRestaurant(user.id);
+      const data = await api.orders.list({ restaurantId: user.id });
       setOrders(data);
     } catch (error) {
       console.error("Error loading orders:", error);
@@ -70,7 +69,7 @@ export default function MyOrdersScreen() {
     >
       <View style={styles.cardHeader}>
         <ThemedText type="h3" numberOfLines={1} style={styles.customerName}>
-          {item.customer_name}
+          {item.customerName}
         </ThemedText>
         <StatusBadge status={item.status} />
       </View>
@@ -82,7 +81,7 @@ export default function MyOrdersScreen() {
           style={[styles.cardText, { color: theme.textSecondary }]}
           numberOfLines={1}
         >
-          {item.customer_address}
+          {item.customerAddress}
         </ThemedText>
       </View>
 
@@ -92,7 +91,7 @@ export default function MyOrdersScreen() {
           type="small"
           style={[styles.cardText, { color: theme.textSecondary }]}
         >
-          {item.phone_primary}
+          {item.phonePrimary}
         </ThemedText>
       </View>
 
@@ -100,12 +99,12 @@ export default function MyOrdersScreen() {
         <View style={styles.amountContainer}>
           <DollarSign size={16} color={theme.link} />
           <ThemedText type="h3" style={{ color: theme.link }}>
-            {item.collection_amount.toFixed(2)}
+            {item.collectionAmount.toFixed(2)}
           </ThemedText>
         </View>
-        {item.delivery_window ? (
+        {item.deliveryWindow ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {item.delivery_window}
+            {item.deliveryWindow}
           </ThemedText>
         ) : null}
       </View>
@@ -139,7 +138,7 @@ export default function MyOrdersScreen() {
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={orders}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderOrderCard}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
