@@ -10,6 +10,9 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["admin", "dispatcher", "restaurant", "driver"] }).notNull(),
   fullName: text("full_name").notNull(),
   phoneNumber: text("phone_number"),
+  balance: integer("balance").default(0).notNull(),
+  currentLat: text("current_lat"),
+  currentLng: text("current_lng"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -27,14 +30,28 @@ export const orders = pgTable("orders", {
   }).default("pending").notNull(),
   collectionAmount: integer("collection_amount").notNull(),
   deliveryFee: integer("delivery_fee").notNull(),
+  deliveryWindow: text("delivery_window"),
+  pickedAt: timestamp("picked_at"),
+  deliveredAt: timestamp("delivered_at"),
   notes: text("notes"),
+  dispatcherNotes: text("dispatcher_notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  amount: integer("amount").notNull(), // In cents
+  type: text("type").notNull(), // 'deposit', 'withdrawal', 'commission', 'payment'
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
   ordersAsRestaurant: many(orders, { relationName: "restaurantOrders" }),
   ordersAsDriver: many(orders, { relationName: "driverOrders" }),
+  transactions: many(transactions, { relationName: "userTransactions" }),
 }));
 
 export const ordersRelations = relations(orders, ({ one }) => ({
@@ -50,6 +67,14 @@ export const ordersRelations = relations(orders, ({ one }) => ({
   }),
 }));
 
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+    relationName: "userTransactions",
+  }),
+}));
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -61,8 +86,15 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   updatedAt: true,
 });
 
+export const insertTransactionSchema = createInsertSchema(transactions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
