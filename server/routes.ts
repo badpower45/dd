@@ -119,13 +119,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const restaurantId = req.query.restaurantId;
     const driverId = req.query.driverId;
     const status = req.query.status as string;
+    const dateStr = req.query.date as string;
+    let dateFilter: Date | undefined;
+    if (dateStr) {
+      dateFilter = new Date(dateStr);
+      if (isNaN(dateFilter.getTime())) dateFilter = undefined;
+    }
 
     // Security/Role Filtering Logic
     // In a real app, extracting the role/ID from the session is critical here.
     // For now, we trust the query params combined with the "x-user-id" header check logic if we enforced it strictly. 
     // Secure implementation requires checking if req.user.id matches the query param.
 
-    let orders = await storage.getAllOrders();
+    let orders = await storage.getAllOrders({ date: dateFilter });
 
     if (restaurantId) {
       orders = orders.filter(o => o.restaurantId === parseInt(restaurantId as string));

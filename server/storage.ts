@@ -17,12 +17,14 @@ export interface IStorage {
   updateOrder(id: number, updates: Partial<Order>): Promise<Order>;
   getOrdersByRestaurant(restaurantId: number): Promise<Order[]>;
   getOrdersByDriver(driverId: number): Promise<Order[]>;
-  getAllOrders(): Promise<Order[]>;
+  getAllOrders(filters?: { date?: Date }): Promise<Order[]>;
   getPendingOrders(): Promise<Order[]>;
 
   // New Methods
   getOnlineDrivers(): Promise<User[]>;
   updateDriverLocation(id: number, lat: string, lng: string): Promise<User>;
+  updateUserPushToken(id: number, token: string): Promise<User>;
+  getDailyStats(date: Date): Promise<{ collections: number; commissions: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -141,8 +143,57 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
 
+    // Notification Logic
+    if (updates.status === 'assigned' && updates.driverId) {
+      const driver = await this.getUser(updates.driverId);
+      if (driver?.pushToken) {
+        // Import dynamically or at top. Since we didn't add import at top, let's trust the bundler or add it now.
+        // Ideally imports are at top. I will add import in a separate step or just assume I can use a imported service if I edit the file top.
+        // Let's rely on adding the import statement in next tool call or reusing this block properly.
+        // WAIT: I can't import dynamically easily in strict TS node without require.
+        // I'll add the import to the top of the file in a separate edit.
+        // For now, let's put the logic here assuming the function exists or is imported.
+        const { sendPushNotification } = await import("./services/notification");
+        sendPushNotification(driver.pushToken, "طلب جديد", "تم تعيين طلب جديد لك #" + id);
+      }
+    }
+
     return updatedOrder;
   }
+
+  async updateUserPushToken(id: number, token: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ pushToken: token })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getDailyStats(date: Date): Promise<{ collections: number; commissions: number }> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const allTx = await db.select().from(transactions);
+    const todayTx = allTx.filter(t => {
+      if (!t.createdAt) return false;
+      const d = new Date(t.createdAt);
+      return d >= startOfDay && d <= endOfDay;
+    });
+
+    const collections = todayTx
+      .filter(t => t.type === 'payment')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const commissions = todayTx
+      .filter(t => t.type === 'commission')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return { collections, commissions };
+  }
+
 
   async getOrdersByRestaurant(restaurantId: number): Promise<Order[]> {
     return await db.select().from(orders).where(eq(orders.restaurantId, restaurantId));
@@ -152,7 +203,29 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(orders).where(eq(orders.driverId, driverId));
   }
 
-  async getAllOrders(): Promise<Order[]> {
+  async getAllOrders(filters?: { date?: Date }): Promise<Order[]> {
+    if (filters?.date) {
+      const startOfDay = new Date(filters.date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(filters.date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      return await db.select().from(orders).where(
+        and(
+          // drizzle-orm timestamp comparison needs careful handling or sql operator
+          // For simplicity in this demo environment, we might fetch more and filter in memory if SQL dates are tricky with strict TS
+          // BUT let's try strict gte/lte
+          // sql`${orders.createdAt} >= ${startOfDay.toISOString()} AND ${orders.createdAt} <= ${endOfDay.toISOString()}`
+          // Actually, simpler to filter in memory for prototype speed if library versions clash, but let's try direct compare.
+          // However, let's stick to in-memory filtering for safety against driver nuances in this env.
+          // UPDATE: using gte/lte from drizzle-orm is better.
+        )
+      ).then(all => all.filter(o => {
+        if (!o.createdAt) return false;
+        const d = new Date(o.createdAt);
+        return d >= startOfDay && d <= endOfDay;
+      }));
+    }
     return await db.select().from(orders);
   }
 

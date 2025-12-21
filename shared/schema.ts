@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   balance: integer("balance").default(0).notNull(),
   currentLat: text("current_lat"),
   currentLng: text("current_lng"),
+  pushToken: text("push_token"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
