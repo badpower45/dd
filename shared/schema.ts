@@ -34,6 +34,7 @@ export const orders = pgTable("orders", {
   deliveryWindow: text("delivery_window"),
   pickedAt: timestamp("picked_at"),
   deliveredAt: timestamp("delivered_at"),
+  proofImageUrl: text("proof_image_url"),
   notes: text("notes"),
   dispatcherNotes: text("dispatcher_notes"),
   createdAt: timestamp("created_at").defaultNow(),

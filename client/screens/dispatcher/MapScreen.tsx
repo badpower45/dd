@@ -27,6 +27,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { api } from "@/lib/api";
 import { Order, Profile } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { calculateDistance, calculateETA } from "@/lib/location";
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
@@ -50,7 +51,14 @@ export default function MapScreen() {
   const loadDrivers = async () => {
     try {
       const activeDrivers = await api.drivers.getActive();
-      setDrivers(activeDrivers);
+      // Map backend response where currentLat/Lng are strings to Profile structure
+      const mappedDrivers = activeDrivers.map((d: any) => ({
+        ...d,
+        currentLocation: (d.currentLat && d.currentLng)
+          ? { lat: parseFloat(d.currentLat), lng: parseFloat(d.currentLng) }
+          : null
+      }));
+      setDrivers(mappedDrivers);
     } catch (error) {
       console.error("Failed to load drivers", error);
     }
@@ -227,6 +235,29 @@ export default function MapScreen() {
             </View>
           </View>
 
+          {/* Dispatcher ETA Info */}
+          {selectedOrder.customerGeo && drivers.length > 0 && (
+            <View style={{ marginBottom: Spacing.md }}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                أقرب سائق يبعد: {
+                  (() => {
+                    const distances = drivers
+                      .filter(d => d.currentLocation)
+                      .map(d => calculateDistance(
+                        d.currentLocation!.lat,
+                        d.currentLocation!.lng,
+                        selectedOrder.customerGeo!.lat,
+                        selectedOrder.customerGeo!.lng
+                      ));
+                    if (distances.length === 0) return "غير معروف";
+                    const minKm = Math.min(...distances);
+                    return `${minKm.toFixed(1)} كم (${calculateETA(minKm)} دقيقة)`;
+                  })()
+                }
+              </ThemedText>
+            </View>
+          )}
+
           <Pressable
             style={[styles.assignButton, { backgroundColor: theme.link }]}
             onPress={handleAssignOrder}
@@ -237,8 +268,9 @@ export default function MapScreen() {
             </ThemedText>
           </Pressable>
         </View>
-      ) : null}
-    </ThemedView>
+      ) : null
+      }
+    </ThemedView >
   );
 }
 

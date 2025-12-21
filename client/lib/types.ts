@@ -69,3 +69,12 @@ export interface WalletSummary {
   today_total: number;
   orders: Order[];
 }
+
+export interface Transaction {
+  id: number;
+  userId: number;
+  amount: number;
+  type: 'deposit' | 'withdrawal' | 'commission' | 'payment';
+  description: string | null;
+  createdAt: string;
+}

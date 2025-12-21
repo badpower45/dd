@@ -35,6 +35,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { Order, OrderStatus } from "@/lib/types";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { calculateDistance, calculateETA } from "@/lib/location";
+// Actually, let's just mock the function if package missing.
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -154,16 +156,37 @@ export default function MyTasksScreen() {
 
   const handleUpdateStatus = async (orderId: number, newStatus: OrderStatus) => {
     try {
-      await api.orders.update(orderId, { status: newStatus });
+      if (newStatus === "delivered") {
+        // Mock Proof of Delivery flow
+        Alert.alert(
+          "إثبات التوصيل",
+          "هل تريد التقاط صورة للإثبات؟ (محاكاة)",
+          [
+            { text: "تخطي", onPress: () => submitStatusUpdate(orderId, newStatus, null) },
+            { text: "رفع صورة (محاكاة)", onPress: () => submitStatusUpdate(orderId, newStatus, "https://placehold.co/600x400/png") }
+          ]
+        );
+      } else {
+        await submitStatusUpdate(orderId, newStatus, null);
+      }
+    } catch (error) {
+      Alert.alert("خطأ", "فشل تحديث حالة الطلب");
+    }
+  };
+
+  const submitStatusUpdate = async (orderId: number, status: OrderStatus, proofUrl: string | null) => {
+    try {
+      await api.orders.update(orderId, { status, proofImageUrl: proofUrl });
       await loadOrders();
       Alert.alert(
         "تم بنجاح",
-        newStatus === "picked_up"
+        status === "picked_up"
           ? "تم تحديد الطلب كمستلم"
           : "تم توصيل الطلب بنجاح!",
       );
     } catch (error) {
-      Alert.alert("خطأ", "فشل تحديث حالة الطلب");
+      console.error(error);
+      Alert.alert("خطأ", "فشل التحديث");
     }
   };
 
@@ -372,7 +395,7 @@ export default function MyTasksScreen() {
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={filteredOrders}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={renderOrderCard}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

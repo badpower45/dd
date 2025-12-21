@@ -11,7 +11,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-import { Order } from "@/lib/types";
+import { Order, Transaction } from "@/lib/types";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
@@ -26,6 +26,7 @@ export default function WalletScreen() {
 
   const [todayDeliveries, setTodayDeliveries] = useState<Order[]>([]);
   const [allDeliveries, setAllDeliveries] = useState<Order[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,10 @@ export default function WalletScreen() {
         return orderDate >= today;
       });
       setTodayDeliveries(todayOrders);
+
+      // Fetch Transactions
+      const txs = await api.transactions.list(user.id);
+      setTransactions(txs);
     } catch (error) {
       console.error("Error loading wallet data:", error);
     } finally {
@@ -143,6 +148,29 @@ export default function WalletScreen() {
           <ThemedText type="h3">{allTimeTotal.toFixed(2)} ر.س</ThemedText>
         </View>
       </View>
+
+      <ThemedText type="h4" style={styles.sectionTitle}>
+        سجل المعاملات
+      </ThemedText>
+
+      {transactions.map((tx) => (
+        <View key={tx.id} style={[styles.deliveryItem, { backgroundColor: theme.backgroundDefault, marginBottom: Spacing.sm }]}>
+          <View style={styles.deliveryInfo}>
+            <ThemedText type="body" style={{ fontWeight: "600" }}>
+              {tx.type === 'commission' ? 'عمولة توصيل' : (tx.type === 'payment' ? 'دفعة' : tx.type)}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              {tx.description}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              {new Date(tx.createdAt).toLocaleDateString("ar-SA")}
+            </ThemedText>
+          </View>
+          <ThemedText type="h4" style={{ color: tx.type === 'deposit' || tx.type === 'commission' ? theme.link : '#EF4444' }}>
+            {tx.type === 'withdrawal' || tx.type === 'payment' ? '-' : '+'}{tx.amount.toFixed(2)} ر.س
+          </ThemedText>
+        </View>
+      ))}
 
       <ThemedText type="h4" style={styles.sectionTitle}>
         توصيلات اليوم

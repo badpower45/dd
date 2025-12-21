@@ -60,5 +60,14 @@ export const api = {
         updateLocation: (userId: number, lat: number, lng: number) =>
             apiRequest("POST", "/api/drivers/location", { userId, lat: String(lat), lng: String(lng) }),
         getActive: () => apiRequest("GET", "/api/drivers/active"),
+    },
+    transactions: {
+        list: (userId: number) => apiRequest("GET", `/api/transactions?userId=${userId}`),
+    },
+    analytics: {
+        getDaily: (date?: Date) => {
+            const dateStr = date ? date.toISOString() : "";
+            return apiRequest("GET", `/api/analytics/daily${dateStr ? `?date=${dateStr}` : ""}`);
+        }
     }
 };

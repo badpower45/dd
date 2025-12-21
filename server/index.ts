@@ -23,7 +23,7 @@ function setupCors(app: express.Application) {
     }
 
     if (process.env.REPLIT_DOMAINS) {
-      process.env.REPLIT_DOMAINS.split(",").forEach((d) => {
+      process.env.REPLIT_DOMAINS.split(",").forEach((d: string) => {
         origins.add(`https://${d.trim()}`);
       });
     }
@@ -191,10 +191,10 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     // Proxy Metro bundler specific routes
-    if (req.path.startsWith("/node_modules") || 
-        req.path.endsWith(".bundle") || req.path.startsWith("/hot") ||
-        req.path.startsWith("/_expo") || req.path.startsWith("/logs") ||
-        req.path.startsWith("/debugger")) {
+    if (req.path.startsWith("/node_modules") ||
+      req.path.endsWith(".bundle") || req.path.startsWith("/hot") ||
+      req.path.startsWith("/_expo") || req.path.startsWith("/logs") ||
+      req.path.startsWith("/debugger")) {
       return metroProxy(req, res, next);
     }
 
