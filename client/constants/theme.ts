@@ -1,26 +1,27 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#1E40AF"; // Deep Royal Blue
-const tintColorDark = "#60A5FA"; // Lighter Blue for Dark Mode
+// Fresh Teal/Cyan theme - Modern and friendly
+const tintColorLight = "#0D9488"; // Teal 600
+const tintColorDark = "#2DD4BF"; // Teal 400
 
 export const Colors = {
   light: {
-    text: "#0F172A", // Slate 900
+    text: "#1E293B", // Slate 800 - slightly softer
     textSecondary: "#64748B", // Slate 500
     buttonText: "#FFFFFF",
     tabIconDefault: "#94A3B8", // Slate 400
     tabIconSelected: tintColorLight,
-    link: "#1E40AF",
-    backgroundRoot: "#F8FAFC", // Slate 50
+    link: "#0D9488", // Teal 600
+    backgroundRoot: "#F0FDFA", // Teal 50 - subtle tint
     backgroundDefault: "#FFFFFF",
     backgroundSecondary: "#F1F5F9", // Slate 100
     backgroundTertiary: "#E2E8F0", // Slate 200
     border: "#E2E8F0", // Slate 200
-    primary: "#1E40AF", // Deep Royal Blue
+    primary: "#0D9488", // Teal 600
     success: "#059669", // Emerald 600
-    warning: "#D97706", // Amber 600
+    warning: "#EA580C", // Orange 600
     danger: "#DC2626", // Red 600
-    info: "#2563EB", // Blue 600
+    info: "#0891B2", // Cyan 600
   },
   dark: {
     text: "#F8FAFC", // Slate 50
@@ -28,26 +29,26 @@ export const Colors = {
     buttonText: "#FFFFFF",
     tabIconDefault: "#64748B", // Slate 500
     tabIconSelected: tintColorDark,
-    link: "#60A5FA",
+    link: "#2DD4BF", // Teal 400
     backgroundRoot: "#0F172A", // Slate 900
     backgroundDefault: "#1E293B", // Slate 800
     backgroundSecondary: "#334155", // Slate 700
     backgroundTertiary: "#475569", // Slate 600
     border: "#334155", // Slate 700
-    primary: "#3B82F6", // Blue 500
+    primary: "#14B8A6", // Teal 500
     success: "#10B981", // Emerald 500
-    warning: "#F59E0B", // Amber 500
+    warning: "#F97316", // Orange 500
     danger: "#EF4444", // Red 500
-    info: "#3B82F6", // Blue 500
+    info: "#06B6D4", // Cyan 500
   },
 };
 
 export const StatusColors = {
-  pending: { bg: "rgba(245, 158, 11, 0.1)", text: "#F59E0B" },
-  assigned: { bg: "rgba(59, 130, 246, 0.1)", text: "#3B82F6" },
-  picked_up: { bg: "rgba(249, 115, 22, 0.1)", text: "#F97316" },
-  delivered: { bg: "rgba(16, 185, 129, 0.1)", text: "#10B981" },
-  cancelled: { bg: "rgba(239, 68, 68, 0.1)", text: "#EF4444" },
+  pending: { bg: "rgba(249, 115, 22, 0.1)", text: "#F97316" }, // Orange
+  assigned: { bg: "rgba(6, 182, 212, 0.1)", text: "#06B6D4" }, // Cyan
+  picked_up: { bg: "rgba(139, 92, 246, 0.1)", text: "#8B5CF6" }, // Violet
+  delivered: { bg: "rgba(16, 185, 129, 0.1)", text: "#10B981" }, // Emerald
+  cancelled: { bg: "rgba(239, 68, 68, 0.1)", text: "#EF4444" }, // Red
 };
 
 export const Spacing = {
@@ -158,5 +159,59 @@ export const Shadows = {
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
+  },
+};
+
+// Gradient presets for GradientCard and backgrounds - Fresh Teal theme
+export const Gradients = {
+  primary: ["#0D9488", "#14B8A6", "#2DD4BF"] as const, // Teal
+  success: ["#059669", "#10B981", "#34D399"] as const, // Emerald
+  warning: ["#EA580C", "#F97316", "#FB923C"] as const, // Orange
+  danger: ["#DC2626", "#EF4444", "#F87171"] as const, // Red
+  info: ["#0891B2", "#06B6D4", "#22D3EE"] as const, // Cyan
+  purple: ["#7C3AED", "#8B5CF6", "#A78BFA"] as const, // Violet
+  mint: ["#0D9488", "#10B981", "#6EE7B7"] as const, // Teal to Emerald
+  dark: ["#0F172A", "#1E293B", "#334155"] as const, // Slate
+};
+
+// Animation timing presets for react-native-reanimated
+export const Animations = {
+  spring: {
+    default: { damping: 15, stiffness: 150, mass: 0.5 },
+    gentle: { damping: 20, stiffness: 100, mass: 0.8 },
+    bouncy: { damping: 10, stiffness: 180, mass: 0.4 },
+    stiff: { damping: 20, stiffness: 300, mass: 0.3 },
+  },
+  timing: {
+    fast: 150,
+    normal: 300,
+    slow: 500,
+  },
+  stagger: {
+    fast: 50,
+    normal: 100,
+    slow: 150,
+  },
+};
+
+// Glassmorphism effect styles
+export const Glassmorphism = {
+  light: {
+    blur: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderWidth: 1,
+  },
+  dark: {
+    blur: 15,
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+  },
+  frosted: {
+    blur: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderWidth: 1,
   },
 };

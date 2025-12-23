@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response) {
         await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response));
-        setUser(response);
+        setUser(response as any);
         return true;
       }
 

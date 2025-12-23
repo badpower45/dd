@@ -55,7 +55,7 @@ export default function AssignOrderScreen() {
     const fetchDrivers = async () => {
       try {
         const data = await api.users.list("driver");
-        setDrivers(data);
+        setDrivers(data as any);
       } catch (error) {
         console.error("Failed to fetch drivers", error);
       }

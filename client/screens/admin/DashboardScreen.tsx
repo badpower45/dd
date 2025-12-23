@@ -47,7 +47,7 @@ export default function DashboardScreen() {
   const loadData = async () => {
     try {
       const data = await api.orders.list();
-      setOrders(data);
+      setOrders(data as any);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }

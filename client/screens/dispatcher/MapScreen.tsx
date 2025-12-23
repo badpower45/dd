@@ -54,7 +54,7 @@ export default function MapScreen() {
   const loadOrders = async () => {
     try {
       const allOrders = await api.orders.list();
-      setOrders(allOrders.filter((o: Order) => o.status === "pending"));
+      setOrders((allOrders as any[]).filter((o: any) => o.status === "pending"));
     } catch (error) {
       console.error("Failed to load orders", error);
     }

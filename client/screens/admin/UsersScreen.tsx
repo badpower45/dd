@@ -45,7 +45,7 @@ export default function UsersScreen() {
       // If API supports filtering by role:
       const roleFilter = filter === "all" ? undefined : filter;
       const data = await api.users.list(roleFilter);
-      setUsers(data);
+      setUsers(data as any);
     } catch (error) {
       console.error("Failed to load users", error);
     }

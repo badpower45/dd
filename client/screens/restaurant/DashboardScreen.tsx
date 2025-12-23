@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { View, StyleSheet, ScrollView, RefreshControl, I18nManager, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Package, DollarSign, Truck } from "lucide-react-native";
+import { Package, DollarSign, Truck, ChevronLeft, Plus, TrendingUp } from "lucide-react-native";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -10,12 +17,112 @@ import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { haptics } from "@/lib/haptics";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 interface Stats {
   todayOrders: number;
   totalCollection: number;
   activeDeliveries: number;
+}
+
+// Simple stat card component
+function StatCard({
+  value,
+  label,
+  icon: Icon,
+  color,
+  delay = 0
+}: {
+  value: number | string;
+  label: string;
+  icon: any;
+  color: string;
+  delay?: number;
+}) {
+  const { theme } = useTheme();
+
+  return (
+    <Animated.View
+      entering={FadeInUp.duration(400).delay(delay)}
+      style={[styles.statCard, { backgroundColor: theme.backgroundDefault }]}
+    >
+      <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
+        <Icon size={20} color={color} />
+      </View>
+      <ThemedText type="h2" style={styles.statValue}>
+        {typeof value === 'number' ? value.toLocaleString('ar-EG') : value}
+      </ThemedText>
+      <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
+        {label}
+      </ThemedText>
+    </Animated.View>
+  );
+}
+
+// Quick action button
+function QuickAction({
+  title,
+  subtitle,
+  icon: Icon,
+  color,
+  onPress,
+  delay = 0
+}: {
+  title: string;
+  subtitle: string;
+  icon: any;
+  color: string;
+  onPress: () => void;
+  delay?: number;
+}) {
+  const { theme } = useTheme();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    haptics.light();
+    scale.value = withSpring(0.98);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  return (
+    <Animated.View entering={FadeInUp.duration(400).delay(delay)}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <Animated.View
+          style={[
+            styles.actionCard,
+            { backgroundColor: theme.backgroundDefault },
+            animatedStyle,
+          ]}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: color + '15' }]}>
+            <Icon size={20} color={color} />
+          </View>
+          <View style={styles.actionTextContainer}>
+            <ThemedText type="h4">{title}</ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              {subtitle}
+            </ThemedText>
+          </View>
+          <ChevronLeft size={18} color={theme.textSecondary} />
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
 }
 
 export default function DashboardScreen() {
@@ -29,8 +136,9 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchStats = async () => {
+    if (!user?.id) return;
     try {
-      const data = await api.analytics.getRestaurantStats();
+      const data = await api.analytics.getRestaurantStats(user.id);
       setStats(data);
     } catch (error) {
       console.log("Failed to fetch stats", error);
@@ -41,106 +149,102 @@ export default function DashboardScreen() {
   };
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (user?.id) {
+      fetchStats();
+    }
+  }, [user?.id]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchStats();
   };
 
-  const renderStatCard = (
-    title: string,
-    value: string,
-    icon: React.ReactNode,
-    color: string,
-  ) => (
-    <View
-      style={[
-        styles.statCard,
-        {
-          backgroundColor: theme.backgroundSecondary,
-          borderColor: theme.border,
-        },
-      ]}
-    >
-      <View style={[styles.iconContainer, { backgroundColor: color + "20" }]}>
-        {icon}
-      </View>
-      <View>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {title}
-        </ThemedText>
-        <ThemedText type="h2" style={{ color: theme.text }}>
-          {value}
-        </ThemedText>
-      </View>
-    </View>
-  );
+  const formatCurrency = (value: number) => {
+    return `${(value / 100).toFixed(0)} ج.م`;
+  };
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <ThemedText type="h1">لوحة التحكم</ThemedText>
-        <ThemedText style={{ color: theme.textSecondary }}>
-          مرحبا، {user?.fullName}
-        </ThemedText>
-      </View>
+      {/* Header */}
+      <Animated.View
+        entering={FadeInDown.duration(400)}
+        style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
+      >
+        <View>
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            مرحباً 👋
+          </ThemedText>
+          <ThemedText type="h2">{user?.fullName || 'المطعم'}</ThemedText>
+        </View>
+      </Animated.View>
 
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.statsGrid}>
-          {renderStatCard(
-            "طلبات اليوم",
-            stats?.todayOrders.toString() || "0",
-            <Package size={24} color={Colors.light.primary} />,
-            Colors.light.primary,
-          )}
-          {renderStatCard(
-            "جاري التوصيل",
-            stats?.activeDeliveries.toString() || "0",
-            <Truck size={24} color={Colors.light.warning} />,
-            Colors.light.warning,
-          )}
-        </View>
-
-        <View style={styles.fullWidthCard}>
-          {renderStatCard(
-            "إجمالي التحصيلات",
-            `${stats?.totalCollection.toFixed(2) || "0.00"} ج.م`,
-            <DollarSign size={24} color={Colors.light.success} />,
-            Colors.light.success,
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText type="h3" style={styles.sectionTitle}>
-            الوصول السريع
+        {/* Hero Stat - Total Collection */}
+        <Animated.View
+          entering={FadeInUp.duration(400).delay(100)}
+          style={[styles.heroCard, { backgroundColor: theme.primary }]}
+        >
+          <View style={styles.heroHeader}>
+            <View style={styles.heroIcon}>
+              <TrendingUp size={20} color="#FFFFFF" />
+            </View>
+            <ThemedText type="small" style={styles.heroLabel}>
+              إجمالي التحصيلات
+            </ThemedText>
+          </View>
+          <ThemedText type="h1" style={styles.heroValue}>
+            {loading ? '...' : formatCurrency(stats?.totalCollection || 0)}
           </ThemedText>
-          <Card onPress={() => (navigation as any).navigate("OrdersTab")}>
-            <View style={styles.actionRow}>
-              <Package size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.sm }}>
-                عرض كل الطلبات
-              </ThemedText>
-            </View>
-          </Card>
-          <Card
-            onPress={() => (navigation as any).navigate("CreateOrder")}
-            style={{ marginTop: Spacing.md }}
-          >
-            <View style={styles.actionRow}>
-              <Truck size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.sm }}>
-                إنشاء طلب جديد
-              </ThemedText>
-            </View>
-          </Card>
+        </Animated.View>
+
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <StatCard
+            value={loading ? '-' : (stats?.todayOrders || 0)}
+            label="طلبات اليوم"
+            icon={Package}
+            color={theme.info}
+            delay={200}
+          />
+          <StatCard
+            value={loading ? '-' : (stats?.activeDeliveries || 0)}
+            label="جاري التوصيل"
+            icon={Truck}
+            color={theme.warning}
+            delay={300}
+          />
         </View>
+
+        {/* Quick Actions */}
+        <Animated.View entering={FadeInUp.duration(400).delay(400)}>
+          <ThemedText type="h4" style={styles.sectionTitle}>
+            الإجراءات السريعة
+          </ThemedText>
+        </Animated.View>
+
+        <QuickAction
+          title="عرض الطلبات"
+          subtitle="إدارة ومتابعة كل الطلبات"
+          icon={Package}
+          color={theme.primary}
+          onPress={() => (navigation as any).navigate("OrdersTab")}
+          delay={450}
+        />
+
+        <QuickAction
+          title="طلب جديد"
+          subtitle="إنشاء طلب توصيل"
+          icon={Plus}
+          color={theme.success}
+          onPress={() => (navigation as any).navigate("CreateOrder")}
+          delay={500}
+        />
       </ScrollView>
     </ThemedView>
   );
@@ -156,40 +260,86 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
+    paddingBottom: Spacing["4xl"],
   },
-  statsGrid: {
-    flexDirection: "row",
+  // Hero card - main stat
+  heroCard: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.lg,
+    ...Shadows.md,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  heroIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroLabel: {
+    color: 'rgba(255,255,255,0.9)',
+  },
+  heroValue: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '700',
+    marginTop: Spacing.md,
+  },
+  // Stats row
+  statsRow: {
+    flexDirection: 'row',
     gap: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   statCard: {
     flex: 1,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderStyle: "solid",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.sm,
   },
-  fullWidthCard: {
-    marginBottom: Spacing.xl,
+  statIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
   },
-  section: {
-    marginBottom: Spacing.xl,
+  statLabel: {
+    marginTop: Spacing.xs,
   },
+  // Section
   sectionTitle: {
     marginBottom: Spacing.md,
   },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  // Action cards
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+    ...Shadows.sm,
+  },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.md,
+  },
+  actionTextContainer: {
+    flex: 1,
   },
 });

@@ -16,6 +16,7 @@ import { db } from "./db";
 import { eq, or, and, ne, sql, gte, lte } from "drizzle-orm";
 import { hash, compare } from "bcryptjs";
 import { sendPushNotification } from "./services/notification";
+import { cache, CacheTTL, CacheKeys } from "./cache";
 
 export interface IStorage {
   // User operations
@@ -87,16 +88,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
-    return await db
-      .select()
-      .from(users)
-      .where(eq(users.role, role as any));
+    return cache.getOrSet(
+      CacheKeys.usersByRole(role),
+      async () => {
+        return await db
+          .select()
+          .from(users)
+          .where(eq(users.role, role as any));
+      },
+      CacheTTL.MEDIUM // 60 seconds
+    );
   }
 
   async getOnlineDrivers(): Promise<User[]> {
-    // For now, we consider drivers with recent location updates as online
-    // In a real app, we might check a "last_active" timestamp
-    return await db.select().from(users).where(eq(users.role, "driver"));
+    // Cache online drivers for 30 seconds to reduce DB load
+    return cache.getOrSet(
+      CacheKeys.onlineDrivers(),
+      async () => {
+        return await db.select().from(users).where(eq(users.role, "driver"));
+      },
+      CacheTTL.SHORT // 30 seconds
+    );
   }
 
   async updateDriverLocation(

@@ -46,7 +46,7 @@ export default function AllOrdersScreen() {
   const loadOrders = async () => {
     try {
       const data = await api.orders.list();
-      setOrders(data);
+      setOrders(data as any);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {

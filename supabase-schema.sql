@@ -67,9 +67,16 @@ CREATE TABLE IF NOT EXISTS ratings (
 CREATE INDEX IF NOT EXISTS idx_orders_restaurant ON orders(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_orders_driver ON orders(driver_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_ratings_driver ON ratings(driver_id);
+
+-- Composite indexes for common query patterns
+CREATE INDEX IF NOT EXISTS idx_orders_restaurant_status ON orders(restaurant_id, status);
+CREATE INDEX IF NOT EXISTS idx_orders_driver_status ON orders(driver_id, status);
+CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON transactions(user_id, type);
 
 -- Insert demo users (password is 'demo123' hashed with bcrypt)
 INSERT INTO users (email, password, role, full_name, phone_number) VALUES

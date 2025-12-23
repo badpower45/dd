@@ -40,21 +40,21 @@ export default function WalletScreen() {
     if (!user) return;
     try {
       const all = await api.orders.list({ driverId: user.id });
-      const delivered = all.filter((o: Order) => o.status === "delivered");
+      const delivered = (all as any[]).filter((o: any) => o.status === "delivered");
       setAllDeliveries(delivered);
 
       // Filter for today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayOrders = delivered.filter((o: Order) => {
-        const orderDate = new Date(o.createdAt);
+      const todayOrders = delivered.filter((o: any) => {
+        const orderDate = new Date(o.createdAt || o.created_at);
         return orderDate >= today;
       });
       setTodayDeliveries(todayOrders);
 
       // Fetch Transactions
       const txs = await api.transactions.list(user.id);
-      setTransactions(txs);
+      setTransactions(txs as any);
     } catch (error) {
       console.error("Error loading wallet data:", error);
     } finally {

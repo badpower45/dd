@@ -44,7 +44,7 @@ export default function OrdersListScreen() {
       // Fetch pending orders (API generic list for now, ideally filter status=pending)
       const data = await api.orders.list();
       // Filter client side as API returns all
-      setOrders(data.filter((o: Order) => o.status === "pending"));
+      setOrders((data as any[]).filter((o: any) => o.status === "pending"));
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {

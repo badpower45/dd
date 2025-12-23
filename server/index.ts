@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import compression from "compression";
 import type { Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
@@ -280,6 +281,9 @@ function setupErrorHandler(app: express.Application) {
 }
 
 (async () => {
+  // Enable gzip compression for all responses
+  app.use(compression());
+
   setupCors(app);
   setupBodyParsing(app);
   setupRequestLogging(app);

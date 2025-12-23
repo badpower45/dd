@@ -63,7 +63,7 @@ export default function MyTasksScreen() {
     if (!user) return;
     try {
       const data = await api.orders.list({ driverId: user.id });
-      setOrders(data);
+      setOrders(data as any);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
