@@ -1,5 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { View, FlatList, StyleSheet, RefreshControl, I18nManager } from "react-native";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  I18nManager,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -80,12 +86,18 @@ export default function WalletScreen() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("ar-SA", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const renderDeliveryItem = ({ item }: { item: Order }) => (
     <View
-      style={[styles.deliveryItem, { backgroundColor: theme.backgroundDefault }]}
+      style={[
+        styles.deliveryItem,
+        { backgroundColor: theme.backgroundDefault },
+      ]}
     >
       <View style={styles.deliveryInfo}>
         <ThemedText type="body" style={{ fontWeight: "600" }}>
@@ -104,15 +116,24 @@ export default function WalletScreen() {
   const renderHeader = () => (
     <View>
       <View
-        style={[styles.summaryCard, { backgroundColor: theme.link, ...Shadows.lg }]}
+        style={[
+          styles.summaryCard,
+          { backgroundColor: theme.link, ...Shadows.lg },
+        ]}
       >
         <View style={styles.summaryHeader}>
           <Calendar size={20} color="#FFFFFF" />
-          <ThemedText type="small" style={{ color: "#FFFFFF", marginRight: Spacing.sm }}>
+          <ThemedText
+            type="small"
+            style={{ color: "#FFFFFF", marginRight: Spacing.sm }}
+          >
             تحصيلات اليوم
           </ThemedText>
         </View>
-        <ThemedText type="h1" style={{ color: "#FFFFFF", marginTop: Spacing.md }}>
+        <ThemedText
+          type="h1"
+          style={{ color: "#FFFFFF", marginTop: Spacing.md }}
+        >
           {todayTotal.toFixed(2)} ر.س
         </ThemedText>
         <ThemedText
@@ -125,7 +146,10 @@ export default function WalletScreen() {
 
       <View style={styles.statsRow}>
         <View
-          style={[styles.statCard, { backgroundColor: theme.backgroundDefault }]}
+          style={[
+            styles.statCard,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
         >
           <View style={[styles.statIcon, { backgroundColor: "#10B98120" }]}>
             <Package size={20} color="#10B981" />
@@ -137,7 +161,10 @@ export default function WalletScreen() {
         </View>
 
         <View
-          style={[styles.statCard, { backgroundColor: theme.backgroundDefault }]}
+          style={[
+            styles.statCard,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
         >
           <View style={[styles.statIcon, { backgroundColor: "#3B82F620" }]}>
             <TrendingUp size={20} color="#3B82F6" />
@@ -154,10 +181,23 @@ export default function WalletScreen() {
       </ThemedText>
 
       {transactions.map((tx) => (
-        <View key={tx.id} style={[styles.deliveryItem, { backgroundColor: theme.backgroundDefault, marginBottom: Spacing.sm }]}>
+        <View
+          key={tx.id}
+          style={[
+            styles.deliveryItem,
+            {
+              backgroundColor: theme.backgroundDefault,
+              marginBottom: Spacing.sm,
+            },
+          ]}
+        >
           <View style={styles.deliveryInfo}>
             <ThemedText type="body" style={{ fontWeight: "600" }}>
-              {tx.type === 'commission' ? 'عمولة توصيل' : (tx.type === 'payment' ? 'دفعة' : tx.type)}
+              {tx.type === "commission"
+                ? "عمولة توصيل"
+                : tx.type === "payment"
+                  ? "دفعة"
+                  : tx.type}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
               {tx.description}
@@ -166,8 +206,17 @@ export default function WalletScreen() {
               {new Date(tx.createdAt).toLocaleDateString("ar-SA")}
             </ThemedText>
           </View>
-          <ThemedText type="h4" style={{ color: tx.type === 'deposit' || tx.type === 'commission' ? theme.link : '#EF4444' }}>
-            {tx.type === 'withdrawal' || tx.type === 'payment' ? '-' : '+'}{tx.amount.toFixed(2)} ر.س
+          <ThemedText
+            type="h4"
+            style={{
+              color:
+                tx.type === "deposit" || tx.type === "commission"
+                  ? theme.link
+                  : "#EF4444",
+            }}
+          >
+            {tx.type === "withdrawal" || tx.type === "payment" ? "-" : "+"}
+            {tx.amount.toFixed(2)} ر.س
           </ThemedText>
         </View>
       ))}
@@ -183,13 +232,21 @@ export default function WalletScreen() {
       <DollarSign size={48} color={theme.textSecondary} />
       <ThemedText
         type="body"
-        style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}
+        style={{
+          color: theme.textSecondary,
+          textAlign: "center",
+          marginTop: Spacing.md,
+        }}
       >
         لم تُكمل أي توصيلات اليوم
       </ThemedText>
       <ThemedText
         type="small"
-        style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}
+        style={{
+          color: theme.textSecondary,
+          textAlign: "center",
+          marginTop: Spacing.xs,
+        }}
       >
         أكمل التوصيلات لترى أرباحك هنا
       </ThemedText>

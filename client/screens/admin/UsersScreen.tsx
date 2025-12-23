@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, FlatList, StyleSheet, Pressable, I18nManager, RefreshControl } from "react-native";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Pressable,
+  I18nManager,
+  RefreshControl,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -14,8 +21,6 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
-
-
 
 const ROLE_FILTERS: { label: string; value: UserRole | "all" }[] = [
   { label: "الكل", value: "all" },
@@ -82,10 +87,7 @@ export default function UsersScreen() {
     >
       <View style={styles.cardHeader}>
         <View
-          style={[
-            styles.avatar,
-            { backgroundColor: getRoleColor(item.role) },
-          ]}
+          style={[styles.avatar, { backgroundColor: getRoleColor(item.role) }]}
         >
           <ThemedText type="h4" style={{ color: "#FFFFFF" }}>
             {item.fullName.charAt(0).toUpperCase()}
@@ -140,9 +142,7 @@ export default function UsersScreen() {
             styles.filterChip,
             {
               backgroundColor:
-                filter === option.value
-                  ? theme.link
-                  : theme.backgroundDefault,
+                filter === option.value ? theme.link : theme.backgroundDefault,
             },
           ]}
           onPress={() => setFilter(option.value)}

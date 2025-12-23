@@ -1,15 +1,15 @@
 import React from "react";
-import { View, Pressable, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet, Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform } from "react-native";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+// import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Plus } from "lucide-react-native";
 
 import MyOrdersScreen from "@/screens/restaurant/MyOrdersScreen";
 import CreateOrderScreen from "@/screens/restaurant/CreateOrderScreen";
+import DashboardScreen from "@/screens/restaurant/DashboardScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
@@ -17,6 +17,7 @@ import { HeaderTitle } from "@/components/HeaderTitle";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 export type RestaurantTabParamList = {
+  DashboardTab: undefined;
   OrdersTab: undefined;
   ProfileTab: undefined;
 };
@@ -31,14 +32,16 @@ const Stack = createNativeStackNavigator<RestaurantStackParamList>();
 
 function FloatingActionButton({ onPress }: { onPress: () => void }) {
   const { theme } = useTheme();
-  const tabBarHeight = useBottomTabBarHeight();
+  // Fixed position instead of using hook outside context
+  // Standard tab bar height is usually around 49-60 + safe area
+  // We'll positon it nicely above.
 
   return (
     <Pressable
       style={[
         styles.fab,
         {
-          bottom: tabBarHeight + Spacing.lg,
+          bottom: Spacing.xl + 60, // approximate height + spacing
           backgroundColor: theme.link,
           ...Shadows.lg,
         },
@@ -82,6 +85,17 @@ function RestaurantTabs({ navigation }: any) {
         }}
       >
         <Tab.Screen
+          name="DashboardTab"
+          component={DashboardScreen}
+          options={{
+            title: "الرئيسية",
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="home" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
           name="OrdersTab"
           component={MyOrdersScreen}
           options={{
@@ -104,7 +118,9 @@ function RestaurantTabs({ navigation }: any) {
           }}
         />
       </Tab.Navigator>
-      <FloatingActionButton onPress={() => navigation.navigate("CreateOrder")} />
+      <FloatingActionButton
+        onPress={() => navigation.navigate("CreateOrder")}
+      />
     </View>
   );
 }

@@ -1,10 +1,9 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform } from "react-native";
 
 import MapScreen from "@/screens/dispatcher/MapScreen";
 import OrdersListScreen from "@/screens/dispatcher/OrdersListScreen";

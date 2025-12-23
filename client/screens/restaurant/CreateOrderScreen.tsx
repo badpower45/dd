@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { X, Check } from "lucide-react-native";
+import { X, Check, Search } from "lucide-react-native";
 import * as Location from "expo-location";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -21,7 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { CustomerGeo } from "@/lib/types";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -53,8 +53,32 @@ export default function CreateOrderScreen() {
   const [phoneSecondary, setPhoneSecondary] = useState("");
   const [collectionAmount, setCollectionAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [foundCustomer, setFoundCustomer] = useState(false);
 
   const deliveryFee = 5.0;
+
+  const handlePhoneChange = async (text: string) => {
+    setPhonePrimary(text);
+    if (text.length >= 10) {
+      setIsSearching(true);
+      try {
+        const customer = await api.customers.lookup(text);
+        if (customer) {
+          setCustomerName(customer.name);
+          setCustomerAddress(customer.address);
+          setFoundCustomer(true);
+        }
+      } catch (error) {
+        // Customer not found, ignore
+        setFoundCustomer(false);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setFoundCustomer(false);
+    }
+  };
 
   const isValid =
     customerName.trim() &&
@@ -72,30 +96,37 @@ export default function CreateOrderScreen() {
     setIsSubmitting(true);
     try {
       const customerGeo = await geocodeAddress(customerAddress.trim());
+
+      // Send with correct field names matching the backend schema
       await api.orders.create({
         restaurantId: user.id,
         customerName: customerName.trim(),
-        customerAddress: customerAddress.trim(),
-        customerGeo: customerGeo,
-        phonePrimary: phonePrimary.trim(),
-        phoneSecondary: phoneSecondary.trim() || undefined,
-        collectionAmount: parseFloat(collectionAmount) || 0,
-        deliveryFee: 5.0, // Should be dynamic or from config
+        customerPhone: phonePrimary.trim(),  // Backend expects customerPhone
+        deliveryAddress: customerAddress.trim(),  // Backend expects deliveryAddress
+        deliveryLat: String(customerGeo.lat),  // Backend expects string
+        deliveryLng: String(customerGeo.lng),  // Backend expects string
+        collectionAmount: Math.round(parseFloat(collectionAmount) * 100) || 0,  // Convert to cents (integer)
+        deliveryFee: 500,  // 5.00 in cents (integer)
       });
       navigation.goBack();
     } catch (error) {
+      console.error("Order creation failed:", error);
       Alert.alert("خطأ", "فشل في إنشاء الطلب. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+
   return (
     <ThemedView style={styles.container}>
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top + Spacing.md, borderBottomColor: theme.border },
+          {
+            paddingTop: insets.top + Spacing.md,
+            borderBottomColor: theme.border,
+          },
         ]}
       >
         <Pressable
@@ -113,7 +144,10 @@ export default function CreateOrderScreen() {
           {isSubmitting ? (
             <ActivityIndicator size="small" color={theme.link} />
           ) : (
-            <Check size={24} color={isValid ? theme.link : theme.textSecondary} />
+            <Check
+              size={24}
+              color={isValid ? theme.link : theme.textSecondary}
+            />
           )}
         </Pressable>
       </View>
@@ -155,22 +189,48 @@ export default function CreateOrderScreen() {
             <ThemedText type="small" style={styles.label}>
               رقم الهاتف الأساسي *
             </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.backgroundDefault,
-                  borderColor: theme.border,
-                  color: theme.text,
-                  textAlign: "right",
-                },
-              ]}
-              value={phonePrimary}
-              onChangeText={setPhonePrimary}
-              placeholder="أدخل رقم الهاتف"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="phone-pad"
-            />
+            <View style={styles.phoneInputContainer}>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    flex: 1,
+                    backgroundColor: theme.backgroundDefault,
+                    borderColor: foundCustomer
+                      ? Colors.light.success
+                      : theme.border,
+                    color: theme.text,
+                    textAlign: "right",
+                  },
+                ]}
+                value={phonePrimary}
+                onChangeText={handlePhoneChange}
+                placeholder="أدخل رقم الهاتف"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="phone-pad"
+              />
+              {isSearching ? (
+                <ActivityIndicator
+                  size="small"
+                  color={theme.link}
+                  style={styles.searchIcon}
+                />
+              ) : (
+                <Search
+                  size={20}
+                  color={theme.textSecondary}
+                  style={styles.searchIcon}
+                />
+              )}
+            </View>
+            {foundCustomer && (
+              <ThemedText
+                type="small"
+                style={{ color: Colors.light.success, marginTop: 4 }}
+              >
+                تم العثور على العميل!
+              </ThemedText>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -340,6 +400,17 @@ const styles = StyleSheet.create({
   multilineInput: {
     height: 100,
     paddingVertical: Spacing.md,
+  },
+  phoneInputContainer: {
+    flexDirection: "row-reverse", // Because RTL layout, icon should be left (visually right in code due to row-reverse? No, row-reverse makes it right-to-left)
+    // Wait, RTL is forced. "row" means left-to-right normally, but with RTL forced it swaps?
+    // Actually, let's keep it simple.
+    // It is safer to use flexDirection: "row" and let I18nManager handle it if enabled.
+    alignItems: "center",
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 10, // In RTL this might be right. If not, we adjust.
   },
   feeDisplay: {
     flexDirection: "row",

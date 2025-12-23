@@ -1,5 +1,12 @@
 import React from "react";
-import { View, StyleSheet, Alert, Pressable, ScrollView, I18nManager } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Pressable,
+  ScrollView,
+  I18nManager,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -94,7 +101,10 @@ export default function ProfileScreen() {
           >
             <ThemedText
               type="small"
-              style={{ color: getRoleColor(user?.role || ""), fontWeight: "600" }}
+              style={{
+                color: getRoleColor(user?.role || ""),
+                fontWeight: "600",
+              }}
             >
               {getRoleLabel(user?.role || "")}
             </ThemedText>
@@ -117,7 +127,10 @@ export default function ProfileScreen() {
                 <User size={20} color={theme.textSecondary} />
               </View>
               <View style={styles.cardContent}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   الاسم الكامل
                 </ThemedText>
                 <ThemedText type="body">{user?.fullName}</ThemedText>
@@ -131,7 +144,10 @@ export default function ProfileScreen() {
                 <Mail size={20} color={theme.textSecondary} />
               </View>
               <View style={styles.cardContent}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   البريد الإلكتروني
                 </ThemedText>
                 <ThemedText type="body">{user?.email}</ThemedText>
@@ -145,7 +161,10 @@ export default function ProfileScreen() {
                 <Phone size={20} color={theme.textSecondary} />
               </View>
               <View style={styles.cardContent}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   رقم الهاتف
                 </ThemedText>
                 <ThemedText type="body">{user?.phoneNumber}</ThemedText>
@@ -159,7 +178,10 @@ export default function ProfileScreen() {
                 <Shield size={20} color={theme.textSecondary} />
               </View>
               <View style={styles.cardContent}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   الدور
                 </ThemedText>
                 <ThemedText type="body">
@@ -181,13 +203,19 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.actionButton,
-              { backgroundColor: theme.backgroundDefault, opacity: pressed ? 0.8 : 1 },
+              {
+                backgroundColor: theme.backgroundDefault,
+                opacity: pressed ? 0.8 : 1,
+              },
             ]}
             onPress={handleLogout}
           >
             <View style={styles.actionButtonContent}>
               <LogOut size={20} color="#EF4444" />
-              <ThemedText type="body" style={{ color: "#EF4444", marginRight: Spacing.md }}>
+              <ThemedText
+                type="body"
+                style={{ color: "#EF4444", marginRight: Spacing.md }}
+              >
                 تسجيل الخروج
               </ThemedText>
             </View>

@@ -54,7 +54,9 @@ export default function MyTasksScreen() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"active" | "completed">("active");
   const [isOnline, setIsOnline] = useState(false);
-  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(
+    null,
+  );
   const onlineIntentRef = useRef<boolean>(false);
 
   const loadOrders = async () => {
@@ -112,13 +114,15 @@ export default function MyTasksScreen() {
         },
         (location) => {
           if (user && onlineIntentRef.current) {
-            api.drivers.updateLocation(
-              user.id,
-              location.coords.latitude,
-              location.coords.longitude
-            ).catch(err => console.error("Loc update failed", err));
+            api.drivers
+              .updateLocation(
+                user.id,
+                location.coords.latitude,
+                location.coords.longitude,
+              )
+              .catch((err) => console.error("Loc update failed", err));
           }
-        }
+        },
       );
 
       if (!onlineIntentRef.current) {
@@ -154,18 +158,28 @@ export default function MyTasksScreen() {
     setRefreshing(false);
   };
 
-  const handleUpdateStatus = async (orderId: number, newStatus: OrderStatus) => {
+  const handleUpdateStatus = async (
+    orderId: number,
+    newStatus: OrderStatus,
+  ) => {
     try {
       if (newStatus === "delivered") {
         // Mock Proof of Delivery flow
-        Alert.alert(
-          "إثبات التوصيل",
-          "هل تريد التقاط صورة للإثبات؟ (محاكاة)",
-          [
-            { text: "تخطي", onPress: () => submitStatusUpdate(orderId, newStatus, null) },
-            { text: "رفع صورة (محاكاة)", onPress: () => submitStatusUpdate(orderId, newStatus, "https://placehold.co/600x400/png") }
-          ]
-        );
+        Alert.alert("إثبات التوصيل", "هل تريد التقاط صورة للإثبات؟ (محاكاة)", [
+          {
+            text: "تخطي",
+            onPress: () => submitStatusUpdate(orderId, newStatus, null),
+          },
+          {
+            text: "رفع صورة (محاكاة)",
+            onPress: () =>
+              submitStatusUpdate(
+                orderId,
+                newStatus,
+                "https://placehold.co/600x400/png",
+              ),
+          },
+        ]);
       } else {
         await submitStatusUpdate(orderId, newStatus, null);
       }
@@ -174,7 +188,11 @@ export default function MyTasksScreen() {
     }
   };
 
-  const submitStatusUpdate = async (orderId: number, status: OrderStatus, proofUrl: string | null) => {
+  const submitStatusUpdate = async (
+    orderId: number,
+    status: OrderStatus,
+    proofUrl: string | null,
+  ) => {
     try {
       await api.orders.update(orderId, { status, proofImageUrl: proofUrl });
       await loadOrders();
@@ -266,13 +284,20 @@ export default function MyTasksScreen() {
       {filter === "active" ? (
         <View style={styles.actionsContainer}>
           <Pressable
-            style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}
+            style={[
+              styles.actionButton,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
             onPress={() => handleOpenMaps(item)}
           >
             <Navigation size={18} color={theme.link} />
             <ThemedText
               type="small"
-              style={{ color: theme.link, marginRight: Spacing.xs, fontWeight: "600" }}
+              style={{
+                color: theme.link,
+                marginRight: Spacing.xs,
+                fontWeight: "600",
+              }}
             >
               الملاحة
             </ThemedText>
@@ -286,7 +311,11 @@ export default function MyTasksScreen() {
               <Package size={18} color="#F97316" />
               <ThemedText
                 type="small"
-                style={{ color: "#F97316", marginRight: Spacing.xs, fontWeight: "600" }}
+                style={{
+                  color: "#F97316",
+                  marginRight: Spacing.xs,
+                  fontWeight: "600",
+                }}
               >
                 استلام
               </ThemedText>
@@ -299,7 +328,11 @@ export default function MyTasksScreen() {
               <CheckCircle size={18} color="#10B981" />
               <ThemedText
                 type="small"
-                style={{ color: "#10B981", marginRight: Spacing.xs, fontWeight: "600" }}
+                style={{
+                  color: "#10B981",
+                  marginRight: Spacing.xs,
+                  fontWeight: "600",
+                }}
               >
                 تم التوصيل
               </ThemedText>
@@ -312,7 +345,10 @@ export default function MyTasksScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
+      <ThemedText
+        type="h3"
+        style={{ textAlign: "center", marginBottom: Spacing.sm }}
+      >
         {filter === "active" ? "لا توجد مهام نشطة" : "لا توجد مهام مكتملة"}
       </ThemedText>
       <ThemedText
@@ -331,13 +367,27 @@ export default function MyTasksScreen() {
       <View
         style={[
           styles.filterContainer,
-          { paddingTop: headerHeight + Spacing.lg, backgroundColor: theme.backgroundRoot },
+          {
+            paddingTop: headerHeight + Spacing.lg,
+            backgroundColor: theme.backgroundRoot,
+          },
         ]}
       >
-        <View style={[styles.onlineToggleContainer, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.onlineToggleContainer,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.onlineToggleLeft}>
-            <Radio size={20} color={isOnline ? "#10B981" : theme.textSecondary} />
-            <ThemedText type="body" style={{ marginRight: Spacing.sm, fontWeight: "600" }}>
+            <Radio
+              size={20}
+              color={isOnline ? "#10B981" : theme.textSecondary}
+            />
+            <ThemedText
+              type="body"
+              style={{ marginRight: Spacing.sm, fontWeight: "600" }}
+            >
               {isOnline ? "متصل" : "غير متصل"}
             </ThemedText>
           </View>
@@ -349,7 +399,12 @@ export default function MyTasksScreen() {
           />
         </View>
 
-        <View style={[styles.filterTabs, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.filterTabs,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <Pressable
             style={[
               styles.filterTab,

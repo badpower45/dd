@@ -1,9 +1,8 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform } from "react-native";
 
 import DashboardScreen from "@/screens/admin/DashboardScreen";
 import AllOrdersScreen from "@/screens/admin/AllOrdersScreen";

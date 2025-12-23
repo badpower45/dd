@@ -71,7 +71,10 @@ export default function AllOrdersScreen() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("ar-SA", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
@@ -141,9 +144,7 @@ export default function AllOrdersScreen() {
             styles.filterChip,
             {
               backgroundColor:
-                filter === option.value
-                  ? theme.link
-                  : theme.backgroundDefault,
+                filter === option.value ? theme.link : theme.backgroundDefault,
             },
           ]}
           onPress={() => setFilter(option.value)}
@@ -174,7 +175,10 @@ export default function AllOrdersScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
+      <ThemedText
+        type="h3"
+        style={{ textAlign: "center", marginBottom: Spacing.sm }}
+      >
         لا توجد طلبات
       </ThemedText>
       <ThemedText

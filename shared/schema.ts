@@ -1,4 +1,12 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -7,7 +15,9 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role", { enum: ["admin", "dispatcher", "restaurant", "driver"] }).notNull(),
+  role: text("role", {
+    enum: ["admin", "dispatcher", "restaurant", "driver"],
+  }).notNull(),
   fullName: text("full_name").notNull(),
   phoneNumber: text("phone_number"),
   balance: integer("balance").default(0).notNull(),
@@ -28,7 +38,9 @@ export const orders = pgTable("orders", {
   driverId: integer("driver_id"),
   status: text("status", {
     enum: ["pending", "assigned", "picked_up", "delivered", "cancelled"],
-  }).default("pending").notNull(),
+  })
+    .default("pending")
+    .notNull(),
   collectionAmount: integer("collection_amount").notNull(),
   deliveryFee: integer("delivery_fee").notNull(),
   deliveryWindow: text("delivery_window"),
@@ -93,10 +105,28 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+// Ratings table for driver reviews
+export const ratings = pgTable("ratings", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull(),
+  driverId: integer("driver_id").notNull(),
+  restaurantId: integer("restaurant_id").notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertRatingSchema = createInsertSchema(ratings).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type Rating = typeof ratings.$inferSelect;
+export type InsertRating = z.infer<typeof insertRatingSchema>;
 

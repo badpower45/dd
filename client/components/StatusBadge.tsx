@@ -22,10 +22,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <View style={[styles.badge, { backgroundColor: colors.bg }]}>
-      <ThemedText
-        type="caption"
-        style={[styles.text, { color: colors.text }]}
-      >
+      <ThemedText type="caption" style={[styles.text, { color: colors.text }]}>
         {statusLabels[status]}
       </ThemedText>
     </View>

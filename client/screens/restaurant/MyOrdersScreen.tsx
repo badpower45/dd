@@ -64,7 +64,10 @@ export default function MyOrdersScreen() {
     <Pressable
       style={({ pressed }) => [
         styles.orderCard,
-        { backgroundColor: theme.backgroundDefault, opacity: pressed ? 0.8 : 1 },
+        {
+          backgroundColor: theme.backgroundDefault,
+          opacity: pressed ? 0.8 : 1,
+        },
       ]}
     >
       <View style={styles.cardHeader}>
@@ -113,7 +116,10 @@ export default function MyOrdersScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
+      <ThemedText
+        type="h3"
+        style={{ textAlign: "center", marginBottom: Spacing.sm }}
+      >
         لا توجد طلبات بعد
       </ThemedText>
       <ThemedText

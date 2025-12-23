@@ -59,7 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return false;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
+      const message =
+        error instanceof Error ? error.message : "An error occurred";
       Alert.alert("Sign In Error", message);
       return false;
     } finally {

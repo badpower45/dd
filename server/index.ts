@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
+import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
@@ -8,6 +9,24 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
 const log = console.log;
+
+// Rate limiters for different endpoints
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per windowMs
+  message: { error: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 login attempts per windowMs
+  message: { error: "Too many login attempts, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 
 declare module "http" {
   interface IncomingMessage {
@@ -18,6 +37,15 @@ declare module "http" {
 function setupCors(app: express.Application) {
   app.use((req, res, next) => {
     const origins = new Set<string>();
+
+    // Add localhost for development
+    origins.add("http://localhost:8081");
+    origins.add("http://127.0.0.1:8081");
+    origins.add("http://localhost:5001");
+
+    // Add local network IPs for mobile testing
+    origins.add("http://192.168.1.5:8081");
+    origins.add("http://192.168.1.5:5001");
 
     if (process.env.REPLIT_DEV_DOMAIN) {
       origins.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
@@ -35,9 +63,9 @@ function setupCors(app: express.Application) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header(
         "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS",
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       );
-      res.header("Access-Control-Allow-Headers", "Content-Type");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-user-id");
       res.header("Access-Control-Allow-Credentials", "true");
     }
 
@@ -48,6 +76,7 @@ function setupCors(app: express.Application) {
     next();
   });
 }
+
 
 function setupBodyParsing(app: express.Application) {
   app.use(
@@ -177,14 +206,17 @@ function configureExpoAndLanding(app: express.Application) {
   });
 
   // Proxy all web app routes to Metro bundler - strip /web prefix
-  app.use("/web", createProxyMiddleware({
-    target: "http://localhost:8081",
-    changeOrigin: true,
-    ws: true,
-    pathRewrite: {
-      "^/web": "",
-    },
-  }));
+  app.use(
+    "/web",
+    createProxyMiddleware({
+      target: "http://localhost:8081",
+      changeOrigin: true,
+      ws: true,
+      pathRewrite: {
+        "^/web": "",
+      },
+    }),
+  );
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
@@ -192,10 +224,14 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     // Proxy Metro bundler specific routes
-    if (req.path.startsWith("/node_modules") ||
-      req.path.endsWith(".bundle") || req.path.startsWith("/hot") ||
-      req.path.startsWith("/_expo") || req.path.startsWith("/logs") ||
-      req.path.startsWith("/debugger")) {
+    if (
+      req.path.startsWith("/node_modules") ||
+      req.path.endsWith(".bundle") ||
+      req.path.startsWith("/hot") ||
+      req.path.startsWith("/_expo") ||
+      req.path.startsWith("/logs") ||
+      req.path.startsWith("/debugger")
+    ) {
       return metroProxy(req, res, next);
     }
 

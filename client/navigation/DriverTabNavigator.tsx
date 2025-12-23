@@ -1,9 +1,8 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform } from "react-native";
 
 import MyTasksScreen from "@/screens/driver/MyTasksScreen";
 import WalletScreen from "@/screens/driver/WalletScreen";

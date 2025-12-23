@@ -44,7 +44,7 @@ export default function OrdersListScreen() {
       // Fetch pending orders (API generic list for now, ideally filter status=pending)
       const data = await api.orders.list();
       // Filter client side as API returns all
-      setOrders(data.filter((o: Order) => o.status === 'pending'));
+      setOrders(data.filter((o: Order) => o.status === "pending"));
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -70,14 +70,20 @@ export default function OrdersListScreen() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("ar-SA", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
     <Pressable
       style={({ pressed }) => [
         styles.orderCard,
-        { backgroundColor: theme.backgroundDefault, opacity: pressed ? 0.8 : 1 },
+        {
+          backgroundColor: theme.backgroundDefault,
+          opacity: pressed ? 0.8 : 1,
+        },
       ]}
       onPress={() => handleOrderPress(item)}
     >
@@ -131,7 +137,11 @@ export default function OrdersListScreen() {
           <Truck size={16} color={theme.link} />
           <ThemedText
             type="small"
-            style={{ color: theme.link, marginRight: Spacing.xs, fontWeight: "600" }}
+            style={{
+              color: theme.link,
+              marginRight: Spacing.xs,
+              fontWeight: "600",
+            }}
           >
             تعيين
           </ThemedText>
@@ -142,7 +152,10 @@ export default function OrdersListScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
+      <ThemedText
+        type="h3"
+        style={{ textAlign: "center", marginBottom: Spacing.sm }}
+      >
         لا توجد طلبات معلقة
       </ThemedText>
       <ThemedText

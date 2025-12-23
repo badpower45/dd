@@ -1,4 +1,17 @@
-import { users, orders, transactions, type User, type InsertUser, type Order, type InsertOrder, type Transaction } from "@shared/schema";
+import {
+  users,
+  orders,
+  transactions,
+  ratings,
+  type User,
+  type InsertUser,
+  type Order,
+  type InsertOrder,
+  type Transaction,
+  type InsertTransaction,
+  type Rating,
+  type InsertRating,
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, or, and, ne, sql, gte, lte } from "drizzle-orm";
 import { hash, compare } from "bcryptjs";
@@ -18,19 +31,37 @@ export interface IStorage {
   updateOrder(id: number, updates: Partial<Order>): Promise<Order>;
   getOrdersByRestaurant(restaurantId: number): Promise<Order[]>;
   getOrdersByDriver(driverId: number): Promise<Order[]>;
-  getAllOrders(filters?: { restaurantId?: number; driverId?: number; status?: string; date?: Date }): Promise<Order[]>;
+  getAllOrders(filters?: {
+    restaurantId?: number;
+    driverId?: number;
+    status?: string;
+    date?: Date;
+  }): Promise<Order[]>;
   getPendingOrders(): Promise<Order[]>;
 
   // New Methods
   getOnlineDrivers(): Promise<User[]>;
   updateDriverLocation(id: number, lat: string, lng: string): Promise<User>;
   updateUserPushToken(id: number, token: string): Promise<User>;
-  getDailyStats(date: Date): Promise<{ collections: number; commissions: number }>;
+  getDailyStats(
+    date: Date,
+  ): Promise<{ collections: number; commissions: number }>;
   getTransactions(userId?: number): Promise<Transaction[]>;
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+
+  // Analytics
+  getDailyStats(date?: Date): Promise<any>;
+  getRestaurantStats(restaurantId: number): Promise<{
+    todayOrders: number;
+    totalCollection: number;
+    activeDeliveries: number;
+  }>;
+
+  // Customer Lookup
+  findLastOrder(phone: string): Promise<Order | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
-
   // User Methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -56,16 +87,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.role, role as any));
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, role as any));
   }
 
   async getOnlineDrivers(): Promise<User[]> {
     // For now, we consider drivers with recent location updates as online
     // In a real app, we might check a "last_active" timestamp
-    return await db.select().from(users).where(eq(users.role, 'driver'));
+    return await db.select().from(users).where(eq(users.role, "driver"));
   }
 
-  async updateDriverLocation(id: number, lat: string, lng: string): Promise<User> {
+  async updateDriverLocation(
+    id: number,
+    lat: string,
+    lng: string,
+  ): Promise<User> {
     const [user] = await db
       .update(users)
       .set({ currentLat: lat, currentLng: lng })
@@ -90,7 +128,7 @@ export class DatabaseStorage implements IStorage {
     if (!order) throw new Error("Order not found");
 
     // Business Logic: Delivery Completion
-    if (updates.status === 'delivered' && order.status !== 'delivered') {
+    if (updates.status === "delivered" && order.status !== "delivered") {
       const now = new Date();
       updates.deliveredAt = now;
 
@@ -99,45 +137,47 @@ export class DatabaseStorage implements IStorage {
         // 1. Add delivery fee to Driver's balance
         if (order.driverId) {
           // Atomic update using sql increment
-          await tx.update(users)
+          await tx
+            .update(users)
             .set({ balance: sql`${users.balance} + ${order.deliveryFee}` })
             .where(eq(users.id, order.driverId));
 
           await tx.insert(transactions).values({
             userId: order.driverId,
             amount: order.deliveryFee,
-            type: 'commission',
-            description: `Delivery fee for order #${id}`
+            type: "commission",
+            description: `Delivery fee for order #${id}`,
           });
         }
 
         // 2. Adjust Restaurant Balance
         // Restaurant gets: Collection Amount (assuming full collection is credited)
-        await tx.update(users)
+        await tx
+          .update(users)
           .set({ balance: sql`${users.balance} + ${order.collectionAmount}` })
           .where(eq(users.id, order.restaurantId));
 
         await tx.insert(transactions).values({
           userId: order.restaurantId,
           amount: order.collectionAmount,
-          type: 'payment',
-          description: `Collection for order #${id}`
+          type: "payment",
+          description: `Collection for order #${id}`,
         });
       });
     }
 
     // Status Logic for timestamps
-    if (updates.status === 'picked_up' && !order.pickedAt) {
+    if (updates.status === "picked_up" && !order.pickedAt) {
       updates.pickedAt = new Date();
     }
 
     // Cancellation Logic
-    if (updates.status === 'cancelled' && order.status !== 'cancelled') {
+    if (updates.status === "cancelled" && order.status !== "cancelled") {
       // If order was already paid/processed, reverse it?
       // Scenario A: Order cancelled before pickup?
       // Scenario B: Order cancelled after pickup?
 
-      // For MVP: If cancelled, we Void the transaction if it exists? 
+      // For MVP: If cancelled, we Void the transaction if it exists?
       // Or if the driver was assigned, maybe we pay them a small fee?
       // Let's assume: If cancelled, we revert any "potential" balance changes if we did them early (we didn't).
       // BUT if we want to track "Cancelled Orders", we just mark it.
@@ -156,7 +196,7 @@ export class DatabaseStorage implements IStorage {
       if (order.driverId) {
         // Maybe pay driver a small "Show up" fee if they picked it up?
         // Only if picked_up.
-        if (order.status === 'picked_up') {
+        if (order.status === "picked_up") {
           // Determine logic. For now, let's keep it simple: No fee to driver if cancelled? Or maybe half?
           // Let's leave it as just status update + log.
         }
@@ -170,10 +210,14 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     // Notification Logic
-    if (updates.status === 'assigned' && updates.driverId) {
+    if (updates.status === "assigned" && updates.driverId) {
       const driver = await this.getUser(updates.driverId);
       if (driver?.pushToken) {
-        await sendPushNotification(driver.pushToken, "طلب جديد", "تم تعيين طلب جديد لك #" + id);
+        await sendPushNotification(
+          driver.pushToken,
+          "طلب جديد",
+          "تم تعيين طلب جديد لك #" + id,
+        );
       }
     }
 
@@ -189,40 +233,60 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getDailyStats(date: Date): Promise<{ collections: number; commissions: number }> {
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    if (!user) throw new Error("User not found");
+    return user;
+  }
+
+
+  async getDailyStats(
+    date: Date,
+  ): Promise<{ collections: number; commissions: number }> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
     const allTx = await db.select().from(transactions);
-    const todayTx = allTx.filter(t => {
+    const todayTx = allTx.filter((t) => {
       if (!t.createdAt) return false;
       const d = new Date(t.createdAt);
       return d >= startOfDay && d <= endOfDay;
     });
 
     const collections = todayTx
-      .filter(t => t.type === 'payment')
+      .filter((t) => t.type === "payment")
       .reduce((sum, t) => sum + t.amount, 0);
 
     const commissions = todayTx
-      .filter(t => t.type === 'commission')
+      .filter((t) => t.type === "commission")
       .reduce((sum, t) => sum + t.amount, 0);
 
     return { collections, commissions };
   }
 
-
   async getOrdersByRestaurant(restaurantId: number): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.restaurantId, restaurantId));
+    return await db
+      .select()
+      .from(orders)
+      .where(eq(orders.restaurantId, restaurantId));
   }
 
   async getOrdersByDriver(driverId: number): Promise<Order[]> {
     return await db.select().from(orders).where(eq(orders.driverId, driverId));
   }
 
-  async getAllOrders(filters?: { restaurantId?: number; driverId?: number; status?: string; date?: Date }): Promise<Order[]> {
+  async getAllOrders(filters?: {
+    restaurantId?: number;
+    driverId?: number;
+    status?: string;
+    date?: Date;
+  }): Promise<Order[]> {
     const conditions = [];
 
     if (filters?.restaurantId) {
@@ -240,14 +304,14 @@ export class DatabaseStorage implements IStorage {
       const endOfDay = new Date(filters.date);
       endOfDay.setHours(23, 59, 59, 999);
       conditions.push(
-        and(
-          gte(orders.createdAt, startOfDay),
-          lte(orders.createdAt, endOfDay)
-        )
+        and(gte(orders.createdAt, startOfDay), lte(orders.createdAt, endOfDay)),
       );
     }
 
-    return await db.select().from(orders).where(and(...conditions));
+    return await db
+      .select()
+      .from(orders)
+      .where(and(...conditions));
   }
 
   async getPendingOrders(): Promise<Order[]> {
@@ -256,9 +320,96 @@ export class DatabaseStorage implements IStorage {
 
   async getTransactions(userId?: number): Promise<Transaction[]> {
     if (userId) {
-      return await db.select().from(transactions).where(eq(transactions.userId, userId));
+      return await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.userId, userId));
     }
     return await db.select().from(transactions);
+  }
+
+  async createTransaction(
+    insertTransaction: InsertTransaction,
+  ): Promise<Transaction> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values(insertTransaction)
+      .returning();
+    return transaction;
+  }
+
+  async getRestaurantStats(restaurantId: number): Promise<{
+    todayOrders: number;
+    totalCollection: number;
+    activeDeliveries: number;
+  }> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayOrders = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          gte(orders.createdAt, startOfDay),
+          lte(orders.createdAt, endOfDay),
+        ),
+      );
+
+    const collections = await db
+      .select({ total: sql<number>`sum(${orders.collectionAmount})` })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          eq(orders.status, "delivered"),
+          gte(orders.createdAt, startOfDay),
+          lte(orders.createdAt, endOfDay),
+        ),
+      );
+
+    const active = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          or(
+            eq(orders.status, "pending"),
+            eq(orders.status, "assigned"),
+            eq(orders.status, "picked_up"),
+          ),
+        ),
+      );
+
+    return {
+      todayOrders: Number(todayOrders[0]?.count || 0),
+      totalCollection: Number(collections[0]?.total || 0),
+      activeDeliveries: Number(active[0]?.count || 0),
+    };
+  }
+
+  async findLastOrder(phone: string): Promise<Order | undefined> {
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.customerPhone, phone))
+      .orderBy(sql`${orders.createdAt} DESC`)
+      .limit(1);
+    return order;
+  }
+
+  // Rating Methods
+  async createRating(insertRating: InsertRating): Promise<Rating> {
+    const [rating] = await db.insert(ratings).values(insertRating).returning();
+    return rating;
+  }
+
+  async getDriverRatings(driverId: number): Promise<Rating[]> {
+    return await db.select().from(ratings).where(eq(ratings.driverId, driverId));
   }
 }
 

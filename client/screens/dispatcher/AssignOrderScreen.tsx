@@ -34,7 +34,6 @@ I18nManager.forceRTL(true);
 
 // Drivers fetched from API
 
-
 type RouteParams = {
   AssignOrder: { order: Order };
 };
@@ -74,7 +73,7 @@ export default function AssignOrderScreen() {
       await api.orders.update(order.id, {
         driverId: selectedDriver.id,
         deliveryWindow: deliveryWindow.trim(),
-        status: "assigned"
+        status: "assigned",
       });
 
       Alert.alert("تم بنجاح", "تم تعيين الطلب للسائق", [
@@ -100,7 +99,10 @@ export default function AssignOrderScreen() {
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top + Spacing.md, borderBottomColor: theme.border },
+          {
+            paddingTop: insets.top + Spacing.md,
+            borderBottomColor: theme.border,
+          },
         ]}
       >
         <Pressable
@@ -118,7 +120,10 @@ export default function AssignOrderScreen() {
           {isSubmitting ? (
             <ActivityIndicator size="small" color={theme.link} />
           ) : (
-            <Check size={24} color={isValid ? theme.link : theme.textSecondary} />
+            <Check
+              size={24}
+              color={isValid ? theme.link : theme.textSecondary}
+            />
           )}
         </Pressable>
       </View>
@@ -136,7 +141,10 @@ export default function AssignOrderScreen() {
           </ThemedText>
 
           <View
-            style={[styles.orderCard, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.orderCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
           >
             <View style={styles.orderRow}>
               <View style={{ flex: 1 }}>
@@ -149,7 +157,11 @@ export default function AssignOrderScreen() {
               <MapPin size={16} color={theme.textSecondary} />
               <ThemedText
                 type="small"
-                style={{ color: theme.textSecondary, marginLeft: Spacing.sm, flex: 1 }}
+                style={{
+                  color: theme.textSecondary,
+                  marginLeft: Spacing.sm,
+                  flex: 1,
+                }}
               >
                 {order.customerAddress}
               </ThemedText>
@@ -211,14 +223,21 @@ export default function AssignOrderScreen() {
               >
                 <User
                   size={20}
-                  color={selectedDriver?.id === driver.id ? "#FFFFFF" : theme.textSecondary}
+                  color={
+                    selectedDriver?.id === driver.id
+                      ? "#FFFFFF"
+                      : theme.textSecondary
+                  }
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <ThemedText type="body" style={{ fontWeight: "600" }}>
                   {driver.fullName}
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   {driver.phoneNumber}
                 </ThemedText>
               </View>

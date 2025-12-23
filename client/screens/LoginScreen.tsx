@@ -3,13 +3,21 @@ import {
   View,
   TextInput,
   StyleSheet,
-  Image,
   Pressable,
   ActivityIndicator,
   I18nManager,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Truck, Mail, Lock, Eye, EyeOff } from "lucide-react-native";
+import {
+  Truck,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+} from "lucide-react-native";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
@@ -17,16 +25,16 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Colors, Spacing, BorderRadius } from "@/constants/theme";
+import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 const demoAccounts = [
-  { email: "admin@demo.com", role: "مدير", icon: "👨‍💼" },
-  { email: "dispatcher@demo.com", role: "مُنسق", icon: "📋" },
-  { email: "restaurant@demo.com", role: "مطعم", icon: "🍽️" },
-  { email: "driver@demo.com", role: "سائق", icon: "🚗" },
+  { email: "admin@demo.com", role: "مدير", icon: "👨‍💼", color: "#3B82F6" },
+  { email: "dispatcher@demo.com", role: "مُنسق", icon: "📋", color: "#10B981" },
+  { email: "restaurant@demo.com", role: "مطعم", icon: "🍽️", color: "#F59E0B" },
+  { email: "driver@demo.com", role: "سائق", icon: "🚗", color: "#6366F1" },
 ];
 
 export default function LoginScreen() {
@@ -51,38 +59,73 @@ export default function LoginScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + Spacing["2xl"],
+            paddingTop: insets.top + Spacing.xl,
             paddingBottom: insets.bottom + Spacing.xl,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <View style={[styles.logoWrapper, { backgroundColor: theme.primary + "15" }]}>
-            <Truck size={48} color={theme.primary} strokeWidth={1.5} />
+          <View
+            style={[styles.logoWrapper, { backgroundColor: theme.primary }]}
+          >
+            <Truck size={40} color="#FFFFFF" strokeWidth={1.5} />
           </View>
-          <ThemedText type="h1" style={styles.appName}>
+          <ThemedText type="h1" style={[styles.appName, { color: theme.text }]}>
             ديليفر إيز
           </ThemedText>
           <ThemedText
             type="body"
             style={[styles.tagline, { color: theme.textSecondary }]}
           >
-            نظام إدارة التوصيل الذكي
+            بوابتك لإدارة التوصيل الذكي
           </ThemedText>
         </View>
 
-        <View style={[styles.formCard, { backgroundColor: theme.backgroundDefault }]}>
-          <ThemedText type="h2" style={styles.formTitle}>
-            تسجيل الدخول
+        <View
+          style={[
+            styles.formCard,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderColor: theme.border,
+              ...Shadows.md,
+            },
+          ]}
+        >
+          <ThemedText
+            type="h2"
+            style={[styles.formTitle, { color: theme.text }]}
+          >
+            مرحباً بك مجدداً 👋
           </ThemedText>
-          
+          <ThemedText
+            type="body"
+            style={[styles.formSubtitle, { color: theme.textSecondary }]}
+          >
+            قم بتسجيل الدخول للمتابعة
+          </ThemedText>
+
           <View style={styles.inputGroup}>
-            <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
+            <ThemedText
+              type="small"
+              style={[styles.label, { color: theme.textSecondary }]}
+            >
               البريد الإلكتروني
             </ThemedText>
-            <View style={[styles.inputWrapper, { borderColor: theme.border, backgroundColor: theme.backgroundRoot }]}>
-              <Mail size={20} color={theme.textSecondary} style={styles.inputIcon} />
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundSecondary,
+                },
+              ]}
+            >
+              <Mail
+                size={20}
+                color={theme.textSecondary}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={email}
@@ -98,11 +141,26 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
+            <ThemedText
+              type="small"
+              style={[styles.label, { color: theme.textSecondary }]}
+            >
               كلمة المرور
             </ThemedText>
-            <View style={[styles.inputWrapper, { borderColor: theme.border, backgroundColor: theme.backgroundRoot }]}>
-              <Lock size={20} color={theme.textSecondary} style={styles.inputIcon} />
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundSecondary,
+                },
+              ]}
+            >
+              <Lock
+                size={20}
+                color={theme.textSecondary}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
                 value={password}
@@ -116,6 +174,7 @@ export default function LoginScreen() {
               <Pressable
                 style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
+                hitSlop={10}
               >
                 {showPassword ? (
                   <EyeOff size={20} color={theme.textSecondary} />
@@ -129,17 +188,27 @@ export default function LoginScreen() {
           <Button
             onPress={handleLogin}
             disabled={isLoading || !email.trim() || !password.trim()}
-            style={styles.loginButton}
+            style={[
+              styles.loginButton,
+              { backgroundColor: theme.primary, ...Shadows.sm },
+            ]}
           >
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              "دخول"
+              <ThemedText
+                style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 16 }}
+              >
+                تسجيل الدخول
+              </ThemedText>
             )}
           </Button>
 
           <Pressable style={styles.forgotPassword}>
-            <ThemedText type="small" style={{ color: theme.link }}>
+            <ThemedText
+              type="small"
+              style={{ color: theme.link, fontWeight: "500" }}
+            >
               نسيت كلمة المرور؟
             </ThemedText>
           </Pressable>
@@ -148,50 +217,63 @@ export default function LoginScreen() {
         <View style={styles.demoSection}>
           <View style={styles.dividerContainer}>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <ThemedText type="small" style={[styles.dividerText, { color: theme.textSecondary, backgroundColor: theme.backgroundRoot }]}>
-              حسابات تجريبية
+            <ThemedText
+              type="small"
+              style={[
+                styles.dividerText,
+                {
+                  color: theme.textSecondary,
+                  backgroundColor: theme.backgroundRoot,
+                },
+              ]}
+            >
+              دخول سريع (تجريبي)
             </ThemedText>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
           </View>
-          
-          <ThemedText
-            type="caption"
-            style={[styles.demoHint, { color: theme.textSecondary }]}
-          >
-            كلمة المرور: demo123
-          </ThemedText>
-          
+
           <View style={styles.demoGrid}>
             {demoAccounts.map((account) => (
               <Pressable
                 key={account.email}
-                style={[
+                style={({ pressed }) => [
                   styles.demoCard,
-                  { 
+                  {
                     backgroundColor: theme.backgroundDefault,
-                    borderColor: theme.border,
+                    borderColor: pressed ? theme.primary : theme.border,
+                    ...Shadows.sm,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
                   },
                 ]}
                 onPress={async () => {
                   await signIn(account.email, "demo123");
                 }}
               >
-                <ThemedText style={styles.demoIcon}>{account.icon}</ThemedText>
-                <ThemedText type="small" style={styles.demoRole}>
+                <View
+                  style={[
+                    styles.demoIconWrapper,
+                    { backgroundColor: account.color + "15" },
+                  ]}
+                >
+                  <ThemedText style={styles.demoIcon}>
+                    {account.icon}
+                  </ThemedText>
+                </View>
+                <ThemedText
+                  type="small"
+                  style={[styles.demoRole, { color: theme.text }]}
+                >
                   {account.role}
+                </ThemedText>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary, fontSize: 10 }}
+                >
+                  تجربة الدور
                 </ThemedText>
               </Pressable>
             ))}
           </View>
-        </View>
-
-        <View style={styles.footer}>
-          <ThemedText
-            type="caption"
-            style={{ color: theme.textSecondary, textAlign: "center" }}
-          >
-            بتسجيل الدخول، أنت توافق على شروط الخدمة وسياسة الخصوصية
-          </ThemedText>
         </View>
       </KeyboardAwareScrollViewCompat>
     </ThemedView>
@@ -205,54 +287,60 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
+    justifyContent: "center",
   },
   headerSection: {
     alignItems: "center",
     marginBottom: Spacing["2xl"],
   },
   logoWrapper: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: BorderRadius.xl,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,
-  },
-  logo: {
-    width: 60,
-    height: 60,
+    transform: [{ rotate: "-5deg" }],
+    ...Shadows.lg,
   },
   appName: {
-    marginBottom: Spacing.xs,
     fontSize: 32,
-    fontWeight: "700",
+    marginBottom: Spacing.xs,
   },
   tagline: {
     fontSize: 16,
+    opacity: 0.8,
   },
   formCard: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.xl,
     marginBottom: Spacing.xl,
+    borderWidth: 1,
   },
   formTitle: {
     textAlign: "center",
+    marginBottom: Spacing.xs,
+  },
+  formSubtitle: {
+    textAlign: "center",
     marginBottom: Spacing.xl,
+    opacity: 0.8,
   },
   inputGroup: {
     marginBottom: Spacing.lg,
   },
   label: {
-    marginBottom: Spacing.sm,
-    fontWeight: "500",
+    marginBottom: Spacing.xs,
+    fontWeight: "600",
     textAlign: "right",
+    paddingRight: Spacing.xs,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    height: 56,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1.5,
+    height: Spacing.inputHeight,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
     paddingHorizontal: Spacing.md,
   },
   inputIcon: {
@@ -263,19 +351,19 @@ const styles = StyleSheet.create({
     height: "100%",
     fontSize: 16,
     paddingHorizontal: Spacing.sm,
+    writingDirection: "rtl",
   },
   eyeButton: {
     padding: Spacing.sm,
   },
   loginButton: {
-    marginTop: Spacing.md,
-    height: 56,
-    borderRadius: BorderRadius.sm,
+    marginTop: Spacing.sm,
+    height: Spacing.buttonHeight,
+    borderRadius: BorderRadius.lg,
   },
   forgotPassword: {
     alignItems: "center",
     marginTop: Spacing.lg,
-    padding: Spacing.sm,
   },
   demoSection: {
     marginBottom: Spacing.xl,
@@ -283,7 +371,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   divider: {
     flex: 1,
@@ -292,34 +380,33 @@ const styles = StyleSheet.create({
   dividerText: {
     paddingHorizontal: Spacing.md,
   },
-  demoHint: {
-    textAlign: "center",
-    marginBottom: Spacing.lg,
-  },
   demoGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
+    gap: Spacing.md,
     justifyContent: "center",
   },
   demoCard: {
     width: "47%",
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
     borderWidth: 1,
   },
-  demoIcon: {
-    fontSize: 28,
+  demoIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing.sm,
+  },
+  demoIcon: {
+    fontSize: 24,
   },
   demoRole: {
     fontWeight: "600",
-    textAlign: "center",
-  },
-  footer: {
-    marginTop: "auto",
-    paddingVertical: Spacing.lg,
+    marginBottom: 2,
   },
 });

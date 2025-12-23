@@ -1,5 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { View, ScrollView, StyleSheet, RefreshControl, I18nManager } from "react-native";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  RefreshControl,
+  I18nManager,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -19,7 +25,12 @@ import { useTheme } from "@/hooks/useTheme";
 
 import { api } from "@/lib/api";
 import { Order } from "@/lib/types";
-import { Spacing, BorderRadius, Shadows, StatusColors } from "@/constants/theme";
+import {
+  Spacing,
+  BorderRadius,
+  Shadows,
+  StatusColors,
+} from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -78,14 +89,28 @@ export default function DashboardScreen() {
     label: string;
     value: string | number;
   }) => (
-    <View style={[styles.statCard, { backgroundColor: theme.backgroundDefault }]}>
+    <View
+      style={[
+        styles.statCard,
+        {
+          backgroundColor: theme.backgroundDefault,
+          borderColor: theme.border,
+          ...Shadows.sm,
+        },
+      ]}
+    >
       <View style={[styles.statIcon, { backgroundColor: iconBg }]}>
-        <Icon size={20} color={iconColor} />
+        <Icon size={24} color={iconColor} />
       </View>
-      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+      <ThemedText
+        type="caption"
+        style={{ color: theme.textSecondary, marginBottom: 4 }}
+      >
         {label}
       </ThemedText>
-      <ThemedText type="h3">{value}</ThemedText>
+      <ThemedText type="h2" style={{ fontWeight: "bold" }}>
+        {value}
+      </ThemedText>
     </View>
   );
 
@@ -106,7 +131,10 @@ export default function DashboardScreen() {
         }
       >
         <View
-          style={[styles.revenueCard, { backgroundColor: theme.link, ...Shadows.lg }]}
+          style={[
+            styles.revenueCard,
+            { backgroundColor: theme.link, ...Shadows.lg },
+          ]}
         >
           <View style={styles.revenueHeader}>
             <TrendingUp size={20} color="#FFFFFF" />
@@ -171,13 +199,19 @@ export default function DashboardScreen() {
         </ThemedText>
 
         <View
-          style={[styles.quickStats, { backgroundColor: theme.backgroundDefault }]}
+          style={[
+            styles.quickStats,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
         >
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
               <Users size={20} color={theme.textSecondary} />
               <View style={{ marginRight: Spacing.md }}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   السائقون النشطون
                 </ThemedText>
                 <ThemedText type="h4">٣</ThemedText>
@@ -189,7 +223,10 @@ export default function DashboardScreen() {
             <View style={styles.quickStatItem}>
               <Package size={20} color={theme.textSecondary} />
               <View style={{ marginRight: Spacing.md }}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   متوسط رسوم التوصيل
                 </ThemedText>
                 <ThemedText type="h4">٥.٠٠ ر.س</ThemedText>
@@ -214,15 +251,19 @@ const styles = StyleSheet.create({
   },
   revenueCard: {
     padding: Spacing.xl,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.xl,
     marginBottom: Spacing.xl,
+    overflow: "hidden",
   },
   revenueHeader: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: Spacing.xs,
   },
   sectionTitle: {
     marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
   },
   statsGrid: {
     flexDirection: "row",
@@ -232,21 +273,28 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: "47%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
+    padding: Spacing.lg, // Reduced padding for tighter look
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
+    ...Shadows.sm,
+    borderWidth: 1,
+    borderColor: "transparent", // Placeholder for theme border
   },
   statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   quickStats: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
+    ...Shadows.sm,
+    marginBottom: Spacing.xl,
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   quickStatRow: {
     padding: Spacing.lg,
@@ -257,5 +305,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
+    opacity: 0.5,
   },
 });
