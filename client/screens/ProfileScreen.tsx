@@ -23,7 +23,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -120,7 +120,14 @@ export default function ProfileScreen() {
           </ThemedText>
 
           <View
-            style={[styles.card, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.card,
+              {
+                backgroundColor: theme.backgroundDefault,
+                borderColor: theme.border,
+              },
+              Shadows.sm,
+            ]}
           >
             <View style={styles.cardRow}>
               <View style={styles.cardIcon}>
@@ -205,8 +212,10 @@ export default function ProfileScreen() {
               styles.actionButton,
               {
                 backgroundColor: theme.backgroundDefault,
+                borderColor: theme.border,
                 opacity: pressed ? 0.8 : 1,
               },
+              Shadows.sm,
             ]}
             onPress={handleLogout}
           >
@@ -267,8 +276,9 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   card: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
+    borderWidth: 1,
   },
   cardRow: {
     flexDirection: "row",
@@ -291,7 +301,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
   },
   actionButtonContent: {
     flexDirection: "row",

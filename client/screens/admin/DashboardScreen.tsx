@@ -21,6 +21,8 @@ import {
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { StatCard } from "@/components/StatCard";
+import { GradientCard } from "@/components/GradientCard";
 import { useTheme } from "@/hooks/useTheme";
 
 import { api } from "@/lib/api";
@@ -76,44 +78,6 @@ export default function DashboardScreen() {
       .reduce((sum, o) => sum + o.collectionAmount, 0),
   };
 
-  const StatCard = ({
-    icon: Icon,
-    iconColor,
-    iconBg,
-    label,
-    value,
-  }: {
-    icon: any;
-    iconColor: string;
-    iconBg: string;
-    label: string;
-    value: string | number;
-  }) => (
-    <View
-      style={[
-        styles.statCard,
-        {
-          backgroundColor: theme.backgroundDefault,
-          borderColor: theme.border,
-          ...Shadows.sm,
-        },
-      ]}
-    >
-      <View style={[styles.statIcon, { backgroundColor: iconBg }]}>
-        <Icon size={24} color={iconColor} />
-      </View>
-      <ThemedText
-        type="caption"
-        style={{ color: theme.textSecondary, marginBottom: 4 }}
-      >
-        {label}
-      </ThemedText>
-      <ThemedText type="h2" style={{ fontWeight: "bold" }}>
-        {value}
-      </ThemedText>
-    </View>
-  );
-
   return (
     <ThemedView style={styles.container}>
       <ScrollView
@@ -130,88 +94,82 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <View
-          style={[
-            styles.revenueCard,
-            { backgroundColor: theme.link, ...Shadows.lg },
-          ]}
+        {/* Revenue Hero Card */}
+        <GradientCard
+          gradient="primary"
+          icon={<TrendingUp size={22} color="#FFFFFF" />}
+          title="إجمالي الإيرادات"
+          subtitle="المُسلّم"
+          style={styles.heroCard}
         >
-          <View style={styles.revenueHeader}>
-            <TrendingUp size={20} color="#FFFFFF" />
-            <ThemedText
-              type="small"
-              style={{ color: "#FFFFFF", marginRight: Spacing.sm }}
-            >
-              إجمالي الإيرادات (المُسلّم)
-            </ThemedText>
-          </View>
-          <ThemedText
-            type="h1"
-            style={{ color: "#FFFFFF", marginTop: Spacing.md }}
-          >
+          <ThemedText type="h1" style={styles.heroValue}>
             {stats.totalRevenue.toFixed(2)} ر.س
           </ThemedText>
-          <ThemedText
-            type="caption"
-            style={{ color: "rgba(255,255,255,0.8)", marginTop: Spacing.xs }}
-          >
+          <ThemedText type="caption" style={styles.heroSubtext}>
             من {stats.delivered} توصيلة مكتملة
           </ThemedText>
+        </GradientCard>
+
+        {/* Section Header */}
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionDot, { backgroundColor: theme.primary }]} />
+          <ThemedText type="h4">نظرة عامة على حالة الطلبات</ThemedText>
         </View>
 
-        <ThemedText type="h4" style={styles.sectionTitle}>
-          نظرة عامة على حالة الطلبات
-        </ThemedText>
-
+        {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <StatCard
-            icon={Package}
-            iconColor={theme.text}
-            iconBg={theme.backgroundSecondary}
+            icon={<Package size={22} color={theme.text} />}
+            iconBgColor={theme.backgroundSecondary}
             label="إجمالي الطلبات"
             value={stats.total}
+            delay={0}
           />
           <StatCard
-            icon={Clock}
-            iconColor={StatusColors.pending.text}
-            iconBg={StatusColors.pending.bg}
+            icon={<Clock size={22} color={StatusColors.pending.text} />}
+            iconBgColor={StatusColors.pending.bg}
             label="قيد الانتظار"
             value={stats.pending}
+            delay={100}
           />
           <StatCard
-            icon={Truck}
-            iconColor={StatusColors.assigned.text}
-            iconBg={StatusColors.assigned.bg}
+            icon={<Truck size={22} color={StatusColors.assigned.text} />}
+            iconBgColor={StatusColors.assigned.bg}
             label="تم التعيين"
             value={stats.assigned}
+            delay={200}
           />
           <StatCard
-            icon={CheckCircle}
-            iconColor={StatusColors.delivered.text}
-            iconBg={StatusColors.delivered.bg}
+            icon={<CheckCircle size={22} color={StatusColors.delivered.text} />}
+            iconBgColor={StatusColors.delivered.bg}
             label="تم التوصيل"
             value={stats.delivered}
+            delay={300}
           />
         </View>
 
-        <ThemedText type="h4" style={styles.sectionTitle}>
-          إحصائيات سريعة
-        </ThemedText>
+        {/* Quick Stats Section */}
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionDot, { backgroundColor: theme.info }]} />
+          <ThemedText type="h4">إحصائيات سريعة</ThemedText>
+        </View>
 
         <View
           style={[
             styles.quickStats,
-            { backgroundColor: theme.backgroundDefault },
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderColor: theme.border,
+            },
           ]}
         >
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
-              <Users size={20} color={theme.textSecondary} />
-              <View style={{ marginRight: Spacing.md }}>
-                <ThemedText
-                  type="caption"
-                  style={{ color: theme.textSecondary }}
-                >
+              <View style={[styles.quickStatIcon, { backgroundColor: `${theme.info}15` }]}>
+                <Users size={20} color={theme.info} />
+              </View>
+              <View style={styles.quickStatText}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   السائقون النشطون
                 </ThemedText>
                 <ThemedText type="h4">٣</ThemedText>
@@ -221,12 +179,11 @@ export default function DashboardScreen() {
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
-              <Package size={20} color={theme.textSecondary} />
-              <View style={{ marginRight: Spacing.md }}>
-                <ThemedText
-                  type="caption"
-                  style={{ color: theme.textSecondary }}
-                >
+              <View style={[styles.quickStatIcon, { backgroundColor: `${theme.success}15` }]}>
+                <Package size={20} color={theme.success} />
+              </View>
+              <View style={styles.quickStatText}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   متوسط رسوم التوصيل
                 </ThemedText>
                 <ThemedText type="h4">٥.٠٠ ر.س</ThemedText>
@@ -249,21 +206,30 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.lg,
   },
-  revenueCard: {
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
+  heroCard: {
     marginBottom: Spacing.xl,
-    overflow: "hidden",
   },
-  revenueHeader: {
+  heroValue: {
+    color: "#FFFFFF",
+    marginTop: Spacing.md,
+    fontSize: 32,
+    fontWeight: "700",
+  },
+  heroSubtext: {
+    color: "rgba(255,255,255,0.8)",
+    marginTop: Spacing.xs,
+  },
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.xs,
-  },
-  sectionTitle: {
     marginBottom: Spacing.md,
     marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  sectionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   statsGrid: {
     flexDirection: "row",
@@ -271,30 +237,12 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.xl,
   },
-  statCard: {
-    width: "47%",
-    padding: Spacing.lg, // Reduced padding for tighter look
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    ...Shadows.sm,
-    borderWidth: 1,
-    borderColor: "transparent", // Placeholder for theme border
-  },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.full,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.md,
-  },
   quickStats: {
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
     ...Shadows.sm,
     marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: "transparent",
   },
   quickStatRow: {
     padding: Spacing.lg,
@@ -303,8 +251,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  quickStatIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: Spacing.md,
+  },
+  quickStatText: {
+    flex: 1,
+  },
   divider: {
     height: 1,
-    opacity: 0.5,
+    marginHorizontal: Spacing.lg,
   },
 });
