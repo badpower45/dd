@@ -9,6 +9,7 @@ import { Alert } from "react-native";
 import { Profile } from "@/lib/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "@/lib/api";
+import { registerForPushNotifications, savePushToken } from "@/lib/notifications";
 
 interface AuthContextType {
   user: Profile | null;
@@ -54,6 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response) {
         await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response));
         setUser(response as any);
+
+        // Register for push notifications after login
+        const pushToken = await registerForPushNotifications();
+        if (pushToken && (response as any).id) {
+          await savePushToken((response as any).id, pushToken);
+        }
+
         return true;
       }
 

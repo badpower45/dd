@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-// import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Plus } from "lucide-react-native";
 
 import MyOrdersScreen from "@/screens/restaurant/MyOrdersScreen";
@@ -30,18 +30,15 @@ export type RestaurantStackParamList = {
 const Tab = createBottomTabNavigator<RestaurantTabParamList>();
 const Stack = createNativeStackNavigator<RestaurantStackParamList>();
 
-function FloatingActionButton({ onPress }: { onPress: () => void }) {
+function FloatingActionButton({ onPress, bottomOffset }: { onPress: () => void; bottomOffset: number }) {
   const { theme } = useTheme();
-  // Fixed position instead of using hook outside context
-  // Standard tab bar height is usually around 49-60 + safe area
-  // We'll positon it nicely above.
 
   return (
     <Pressable
       style={[
         styles.fab,
         {
-          bottom: Spacing.xl + 60, // approximate height + spacing
+          bottom: bottomOffset,
           backgroundColor: theme.link,
           ...Shadows.lg,
         },
@@ -55,6 +52,10 @@ function FloatingActionButton({ onPress }: { onPress: () => void }) {
 
 function RestaurantTabs({ navigation }: any) {
   const { theme, isDark } = useTheme();
+  const tabBarHeight = useBottomTabBarHeight();
+
+  // Calculate FAB position: tab bar height + spacing
+  const fabBottomOffset = tabBarHeight + Spacing.lg;
 
   return (
     <View style={{ flex: 1 }}>
@@ -120,6 +121,7 @@ function RestaurantTabs({ navigation }: any) {
       </Tab.Navigator>
       <FloatingActionButton
         onPress={() => navigation.navigate("CreateOrder")}
+        bottomOffset={fabBottomOffset}
       />
     </View>
   );
