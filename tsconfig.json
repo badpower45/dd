@@ -4,22 +4,13 @@
     "strict": true,
     "esModuleInterop": true,
     "paths": {
-      "@/*": [
-        "./client/*"
-      ],
-      "@shared/*": [
-        "./shared/*"
-      ]
+      "@/*": ["./client/*"],
+      "@shared/*": ["./shared/*"]
     },
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "jsx": "react-native"
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"],
   "exclude": [
     "node_modules",
     "build",

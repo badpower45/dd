@@ -1,7 +1,7 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ["babel-preset-expo"],
+    presets: ["babel-preset-expo", "nativewind/babel"],
     plugins: [
       [
         "module-resolver",
@@ -12,14 +12,14 @@ module.exports = function (api) {
             "@shared": "./shared",
           },
           extensions: [
-            ".web.tsx",
-            ".web.ts",
-            ".web.js",
-            ".ios.js",
-            ".android.js",
             ".js",
+            ".jsx",
             ".ts",
             ".tsx",
+            ".android.js",
+            ".android.tsx",
+            ".ios.js",
+            ".ios.tsx",
             ".json",
           ],
         },

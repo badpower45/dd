@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { MapPin, Truck, X } from "lucide-react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -16,8 +16,10 @@ import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
 
-import { api } from "@/lib/api";
 import { Order, Profile } from "@/lib/types";
+import { usePendingOrders, useActiveDrivers } from "@/hooks/useApi";
+import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
+import { useRealtimeDrivers } from "@/hooks/useRealtimeDrivers";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { calculateDistance, calculateETA } from "@/lib/location";
 
@@ -47,53 +49,60 @@ export default function MapScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [drivers, setDrivers] = useState<Profile[]>([]);
+  const { data: pendingOrders = [] } = usePendingOrders();
+  const { data: activeDrivers = [] } = useActiveDrivers();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const loadOrders = async () => {
-    try {
-      const allOrders = await api.orders.list();
-      setOrders((allOrders as any[]).filter((o: any) => o.status === "pending"));
-    } catch (error) {
-      console.error("Failed to load orders", error);
-    }
-  };
+  useRealtimeOrders(true);
+  useRealtimeDrivers(true);
 
-  const loadDrivers = async () => {
-    try {
-      const activeDrivers = await api.drivers.getActive();
-      // Map backend response where currentLat/Lng are strings to Profile structure
-      const mappedDrivers = activeDrivers.map((d: any) => ({
-        ...d,
-        currentLocation:
-          d.currentLat && d.currentLng
-            ? { lat: parseFloat(d.currentLat), lng: parseFloat(d.currentLng) }
+  const orders = useMemo<Order[]>(() => {
+    return (pendingOrders as any[])
+      .map((o) => ({
+        id: o.id,
+        createdAt: o.created_at,
+        restaurantId: o.restaurant_id,
+        driverId: o.driver_id ?? null,
+        customerName: o.customer_name || "عميل",
+        customerAddress: o.delivery_address || "بدون عنوان",
+        customerGeo:
+          o.delivery_lat && o.delivery_lng
+            ? { lat: Number(o.delivery_lat), lng: Number(o.delivery_lng) }
             : null,
-      }));
-      setDrivers(mappedDrivers);
-    } catch (error) {
-      console.error("Failed to load drivers", error);
+        phonePrimary: o.customer_phone || "-",
+        phoneSecondary: null,
+        collectionAmount: Number(o.collection_amount || 0),
+        deliveryFee: Number(o.delivery_fee || 0),
+        status: o.status,
+        deliveryWindow: o.delivery_window,
+        restaurant: undefined,
+        driver: undefined,
+      }))
+      .filter((o) => o.status === "pending");
+  }, [pendingOrders]);
+
+  const drivers = useMemo<Profile[]>(() => {
+    return (activeDrivers as any[]).map((d) => ({
+      id: d.id,
+      role: d.role,
+      fullName: d.full_name || "سائق",
+      phoneNumber: d.phone_number || "-",
+      currentLocation:
+        d.current_lat && d.current_lng
+          ? { lat: parseFloat(d.current_lat), lng: parseFloat(d.current_lng) }
+          : null,
+      driverStatus: d.driver_status || "available",
+      balance: d.balance,
+      email: d.email,
+      createdAt: d.created_at,
+    }));
+  }, [activeDrivers]);
+
+  useEffect(() => {
+    if (selectedOrder && !orders.find((o) => o.id === selectedOrder.id)) {
+      setSelectedOrder(null);
     }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadOrders();
-      loadDrivers();
-
-      // Poll for updates every 30s while focused
-      const interval = setInterval(() => {
-        loadOrders();
-        loadDrivers();
-      }, 30000);
-
-      return () => clearInterval(interval);
-    }, []),
-  );
-
-  // No longer using useEffect for legacy subscription
-  // useEffect(() => { ... }, []);
+  }, [orders, selectedOrder]);
 
   const getDriverMarkerColor = (status?: string) => {
     if (status === "available") return "#10B981";

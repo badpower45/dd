@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
-import { MapPin, Phone, Clock } from "lucide-react-native";
+import { MapPin, Phone, Clock, Banknote } from "lucide-react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -20,7 +20,7 @@ import { useTheme } from "@/hooks/useTheme";
 
 import { api } from "@/lib/api";
 import { Order, OrderStatus } from "@/lib/types";
-import { Spacing, BorderRadius, StatusColors } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -46,7 +46,18 @@ export default function AllOrdersScreen() {
   const loadOrders = async () => {
     try {
       const data = await api.orders.list();
-      setOrders(data as any);
+      // Safely map Supabase snake_case fields to the UI
+      const mappedOrders = (data as any[]).map((o) => ({
+        id: o.id,
+        customerName: o.customer_name || "عميل مجهول",
+        customerAddress: o.delivery_address || "بدون عنوان",
+        phonePrimary: o.customer_phone || "-",
+        collectionAmount: Number(o.collection_amount || 0),
+        status: o.status || "pending",
+        createdAt: o.created_at,
+        deliveryWindow: o.delivery_window,
+      })) as Order[];
+      setOrders(mappedOrders);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -70,16 +81,23 @@ export default function AllOrdersScreen() {
     filter === "all" ? orders : orders.filter((o) => o.status === filter);
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-SA", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString("ar-SA", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "--:--";
+    }
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
     <View
-      style={[styles.orderCard, { backgroundColor: theme.backgroundDefault }]}
+      style={[
+        styles.orderCard,
+        { backgroundColor: theme.backgroundDefault, ...Shadows.sm },
+      ]}
     >
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
@@ -104,7 +122,7 @@ export default function AllOrdersScreen() {
         <ThemedText
           type="small"
           style={[styles.cardText, { color: theme.textSecondary }]}
-          numberOfLines={2}
+          numberOfLines={1}
         >
           {item.customerAddress}
         </ThemedText>
@@ -120,17 +138,20 @@ export default function AllOrdersScreen() {
         </ThemedText>
       </View>
 
-      <View style={styles.cardFooter}>
+      <View style={[styles.cardFooter, { borderTopColor: theme.border }]}>
         <View style={styles.amountContainer}>
-          <ThemedText type="h3" style={{ color: theme.link }}>
-            {item.collectionAmount.toFixed(2)} ر.س
+          <Banknote size={16} color={theme.primary} style={{ marginLeft: 4 }} />
+          <ThemedText type="h4" style={{ color: theme.primary }}>
+            {(item.collectionAmount || 0).toFixed(2)} ر.س
           </ThemedText>
         </View>
-        {item.deliveryWindow ? (
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {item.deliveryWindow}
-          </ThemedText>
-        ) : null}
+        {item.deliveryWindow && (
+          <View style={styles.windowBadge}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              {item.deliveryWindow}
+            </ThemedText>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -144,7 +165,9 @@ export default function AllOrdersScreen() {
             styles.filterChip,
             {
               backgroundColor:
-                filter === option.value ? theme.link : theme.backgroundDefault,
+                filter === option.value
+                  ? theme.primary
+                  : theme.backgroundSecondary,
             },
           ]}
           onPress={() => setFilter(option.value)}
@@ -163,35 +186,6 @@ export default function AllOrdersScreen() {
     </View>
   );
 
-  const getFilterLabel = (filterValue: OrderStatus | "all") => {
-    const labels: Record<string, string> = {
-      all: "الكل",
-      pending: "قيد الانتظار",
-      assigned: "تم التعيين",
-      delivered: "تم التوصيل",
-    };
-    return labels[filterValue] || filterValue;
-  };
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <ThemedText
-        type="h3"
-        style={{ textAlign: "center", marginBottom: Spacing.sm }}
-      >
-        لا توجد طلبات
-      </ThemedText>
-      <ThemedText
-        type="small"
-        style={{ color: theme.textSecondary, textAlign: "center" }}
-      >
-        {filter === "all"
-          ? "لم يتم إنشاء أي طلبات بعد"
-          : `لا توجد طلبات ${getFilterLabel(filter)}`}
-      </ThemedText>
-    </View>
-  );
-
   return (
     <ThemedView style={styles.container}>
       <FlatList
@@ -203,31 +197,37 @@ export default function AllOrdersScreen() {
             paddingBottom: tabBarHeight + Spacing.xl,
           },
         ]}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={filteredOrders}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderOrderCard}
         ListHeaderComponent={renderHeader}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
         }
-        ListEmptyComponent={loading ? null : renderEmptyState}
+        ListEmptyComponent={
+          loading ? null : (
+            <View style={styles.emptyState}>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>
+                لا توجد طلبات في هذا القسم
+              </ThemedText>
+            </View>
+          )
+        }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        showsVerticalScrollIndicator={false}
       />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-  },
+  container: { flex: 1 },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: Spacing.lg },
   filterContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   },
   orderCard: {
     padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
   },
   cardHeader: {
     flexDirection: "row",
@@ -252,11 +252,11 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: Spacing.xs,
+    marginTop: 4,
   },
   cardRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginBottom: Spacing.sm,
   },
   cardText: {
@@ -268,21 +268,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: Spacing.sm,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
   },
   amountContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  separator: {
-    height: Spacing.md,
+  windowBadge: {
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: Spacing["4xl"],
-  },
+  separator: { height: Spacing.md },
+  emptyState: { flex: 1, alignItems: "center", paddingTop: 50 },
 });

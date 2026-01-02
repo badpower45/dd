@@ -33,7 +33,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-
 async function authenticateUser(
   req: Request,
   res: Response,
@@ -147,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
 
       // Only allow updating specific fields
-      const allowedFields = ['pushToken', 'fullName', 'phoneNumber'];
+      const allowedFields = ["push_token", "full_name", "phone_number"];
       const filteredUpdates: Record<string, unknown> = {};
       for (const field of allowedFields) {
         if (updates[field] !== undefined) {
@@ -158,7 +157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.updateUser(id, filteredUpdates);
       res.json(user);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update user";
+      const message =
+        error instanceof Error ? error.message : "Failed to update user";
       res.status(400).json({ message });
     }
   });
@@ -216,10 +216,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) return res.status(404).json({ message: "Customer not found" });
 
     res.json({
-      name: order.customerName,
-      address: order.deliveryAddress,
-      lat: order.deliveryLat ? parseFloat(order.deliveryLat) : undefined,
-      lng: order.deliveryLng ? parseFloat(order.deliveryLng) : undefined,
+      name: order.customer_name,
+      address: order.delivery_address,
+      lat: order.delivery_lat ? parseFloat(order.delivery_lat) : undefined,
+      lng: order.delivery_lng ? parseFloat(order.delivery_lng) : undefined,
     });
   });
 
@@ -293,37 +293,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the order before update to check changes
       const oldOrders = await storage.getAllOrders({ status: undefined });
-      const oldOrder = oldOrders.find(o => o.id === id);
+      const oldOrder = oldOrders.find((o) => o.id === id);
 
       const order = await storage.updateOrder(id, updates);
 
       // Send push notifications based on what changed
-      const { sendPushNotification, NotificationTemplates } = await import("./notifications");
+      const { sendPushNotification, NotificationTemplates } = await import(
+        "./notifications"
+      );
 
       // If driver was assigned
-      if (updates.driverId && updates.driverId !== oldOrder?.driverId) {
-        const driver = await storage.getUser(updates.driverId);
-        if (driver?.pushToken) {
+      if (updates.driver_id && updates.driver_id !== oldOrder?.driver_id) {
+        const driver = await storage.getUser(updates.driver_id);
+        if (driver?.push_token) {
           const notification = NotificationTemplates.orderAssigned(id);
-          await sendPushNotification(driver.pushToken, notification.title, notification.body, notification.data);
+          await sendPushNotification(
+            driver.push_token,
+            notification.title,
+            notification.body,
+            notification.data,
+          );
         }
       }
 
       // If status changed
       if (updates.status && updates.status !== oldOrder?.status) {
         // Notify restaurant about status changes
-        const restaurant = await storage.getUser(order.restaurantId);
-        if (restaurant?.pushToken) {
+        const restaurant = await storage.getUser(order.restaurant_id);
+        if (restaurant?.push_token) {
           let notification;
-          if (updates.status === 'picked_up') {
+          if (updates.status === "picked_up") {
             notification = NotificationTemplates.orderPickedUp(id);
-          } else if (updates.status === 'delivered') {
+          } else if (updates.status === "delivered") {
             notification = NotificationTemplates.orderDelivered(id);
-          } else if (updates.status === 'cancelled') {
+          } else if (updates.status === "cancelled") {
             notification = NotificationTemplates.orderCancelled(id);
           }
           if (notification) {
-            await sendPushNotification(restaurant.pushToken, notification.title, notification.body, notification.data);
+            await sendPushNotification(
+              restaurant.push_token,
+              notification.title,
+              notification.body,
+              notification.data,
+            );
           }
         }
       }
@@ -343,42 +355,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
 
       if (!orderId || !driverId || !rating) {
-        return res.status(400).json({ message: "orderId, driverId, and rating are required" });
+        return res
+          .status(400)
+          .json({ message: "orderId, driverId, and rating are required" });
       }
 
       if (rating < 1 || rating > 5) {
-        return res.status(400).json({ message: "Rating must be between 1 and 5" });
+        return res
+          .status(400)
+          .json({ message: "Rating must be between 1 and 5" });
       }
 
       const newRating = await storage.createRating({
-        orderId,
-        driverId,
-        restaurantId: user.id,
+        order_id: orderId,
+        driver_id: driverId,
+        restaurant_id: user.id,
         rating,
         comment: comment || null,
       });
 
       res.json(newRating);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create rating";
+      const message =
+        error instanceof Error ? error.message : "Failed to create rating";
       res.status(400).json({ message });
     }
   });
 
-  app.get("/api/ratings/driver/:driverId", authenticateUser, async (req, res) => {
-    try {
-      const driverId = parseInt(req.params.driverId);
-      const ratings = await storage.getDriverRatings(driverId);
-      const average = ratings.length > 0
-        ? ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
-        : 0;
+  app.get(
+    "/api/ratings/driver/:driverId",
+    authenticateUser,
+    async (req, res) => {
+      try {
+        const driverId = parseInt(req.params.driverId);
+        const ratings = await storage.getDriverRatings(driverId);
+        const average =
+          ratings.length > 0
+            ? ratings.reduce(
+                (sum: number, r: { rating: number }) => sum + r.rating,
+                0,
+              ) / ratings.length
+            : 0;
 
-      res.json({ ratings, average: Math.round(average * 10) / 10, count: ratings.length });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to get ratings" });
-    }
-  });
-
+        res.json({
+          ratings,
+          average: Math.round(average * 10) / 10,
+          count: ratings.length,
+        });
+      } catch (error) {
+        res.status(500).json({ message: "Failed to get ratings" });
+      }
+    },
+  );
 
   const httpServer = createServer(app);
   return httpServer;

@@ -21,6 +21,7 @@ import {
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -87,11 +88,11 @@ export default function ProfileScreen() {
             ]}
           >
             <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
-              {user?.fullName?.charAt(0) || "م"}
+              {user?.full_name?.charAt(0) || "م"}
             </ThemedText>
           </View>
           <ThemedText type="h2" style={styles.userName}>
-            {user?.fullName}
+            {user?.full_name}
           </ThemedText>
           <View
             style={[
@@ -140,7 +141,7 @@ export default function ProfileScreen() {
                 >
                   الاسم الكامل
                 </ThemedText>
-                <ThemedText type="body">{user?.fullName}</ThemedText>
+                <ThemedText type="body">{user?.full_name}</ThemedText>
               </View>
             </View>
 
@@ -174,7 +175,7 @@ export default function ProfileScreen() {
                 >
                   رقم الهاتف
                 </ThemedText>
-                <ThemedText type="body">{user?.phoneNumber}</ThemedText>
+                <ThemedText type="body">{user?.phone_number}</ThemedText>
               </View>
             </View>
 
@@ -199,12 +200,24 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Language Section */}
         <View style={styles.section}>
           <ThemedText
             type="caption"
             style={[styles.sectionTitle, { color: theme.textSecondary }]}
           >
-            الإجراءات
+            اللغة
+          </ThemedText>
+          <LanguageSwitcher />
+        </View>
+
+        {/* Settings Section */}
+        <View style={styles.section}>
+          <ThemedText
+            type="caption"
+            style={[styles.sectionTitle, { color: theme.textSecondary }]}
+          >
+            الإعدادات
           </ThemedText>
 
           <Pressable

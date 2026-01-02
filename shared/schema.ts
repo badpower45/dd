@@ -18,48 +18,53 @@ export const users = pgTable("users", {
   role: text("role", {
     enum: ["admin", "dispatcher", "restaurant", "driver"],
   }).notNull(),
-  fullName: text("full_name").notNull(),
-  phoneNumber: text("phone_number"),
+  full_name: text("full_name").notNull(),
+  phone_number: text("phone_number"),
   balance: integer("balance").default(0).notNull(),
-  currentLat: text("current_lat"),
-  currentLng: text("current_lng"),
-  pushToken: text("push_token"),
-  createdAt: timestamp("created_at").defaultNow(),
+  current_lat: text("current_lat"),
+  current_lng: text("current_lng"),
+  push_token: text("push_token"),
+  is_active: boolean("is_active").default(true).notNull(),
+  avatar_url: text("avatar_url"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
-  customerName: text("customer_name").notNull(),
-  customerPhone: text("customer_phone").notNull(),
-  deliveryAddress: text("delivery_address").notNull(),
-  deliveryLat: text("delivery_lat"),
-  deliveryLng: text("delivery_lng"),
-  restaurantId: integer("restaurant_id").notNull(),
-  driverId: integer("driver_id"),
+  customer_name: text("customer_name").notNull(),
+  customer_phone: text("customer_phone").notNull(),
+  delivery_address: text("delivery_address").notNull(),
+  delivery_lat: text("delivery_lat"),
+  delivery_lng: text("delivery_lng"),
+  restaurant_id: integer("restaurant_id").notNull(),
+  driver_id: integer("driver_id"),
   status: text("status", {
     enum: ["pending", "assigned", "picked_up", "delivered", "cancelled"],
   })
     .default("pending")
     .notNull(),
-  collectionAmount: integer("collection_amount").notNull(),
-  deliveryFee: integer("delivery_fee").notNull(),
-  deliveryWindow: text("delivery_window"),
-  pickedAt: timestamp("picked_at"),
-  deliveredAt: timestamp("delivered_at"),
-  proofImageUrl: text("proof_image_url"),
+  collection_amount: integer("collection_amount").notNull(),
+  delivery_fee: integer("delivery_fee").notNull(),
+  delivery_window: text("delivery_window"),
+  picked_at: timestamp("picked_at"),
+  delivered_at: timestamp("delivered_at"),
+  proof_image_url: text("proof_image_url"),
   notes: text("notes"),
-  dispatcherNotes: text("dispatcher_notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  dispatcher_notes: text("dispatcher_notes"),
+  cancelled_reason: text("cancelled_reason"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  user_id: integer("user_id").notNull(),
+  order_id: integer("order_id"),
   amount: integer("amount").notNull(), // In cents
-  type: text("type").notNull(), // 'deposit', 'withdrawal', 'commission', 'payment'
+  type: text("type").notNull(), // 'deposit', 'withdrawal', 'commission', 'payment', 'refund'
   description: text("description"),
-  createdAt: timestamp("created_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -70,12 +75,12 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const ordersRelations = relations(orders, ({ one }) => ({
   restaurant: one(users, {
-    fields: [orders.restaurantId],
+    fields: [orders.restaurant_id],
     references: [users.id],
     relationName: "restaurantOrders",
   }),
   driver: one(users, {
-    fields: [orders.driverId],
+    fields: [orders.driver_id],
     references: [users.id],
     relationName: "driverOrders",
   }),
@@ -83,7 +88,7 @@ export const ordersRelations = relations(orders, ({ one }) => ({
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
   user: one(users, {
-    fields: [transactions.userId],
+    fields: [transactions.user_id],
     references: [users.id],
     relationName: "userTransactions",
   }),
@@ -91,34 +96,35 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
+  updated_at: true,
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
-  createdAt: true,
-  updatedAt: true,
+  created_at: true,
+  updated_at: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
 });
 
 // Ratings table for driver reviews
 export const ratings = pgTable("ratings", {
   id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull(),
-  driverId: integer("driver_id").notNull(),
-  restaurantId: integer("restaurant_id").notNull(),
+  order_id: integer("order_id").notNull(),
+  driver_id: integer("driver_id").notNull(),
+  restaurant_id: integer("restaurant_id").notNull(),
   rating: integer("rating").notNull(), // 1-5 stars
   comment: text("comment"),
-  createdAt: timestamp("created_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const insertRatingSchema = createInsertSchema(ratings).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
 });
 
 export type User = typeof users.$inferSelect;
@@ -129,4 +135,3 @@ export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Rating = typeof ratings.$inferSelect;
 export type InsertRating = z.infer<typeof insertRatingSchema>;
-

@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { MapPin, Phone, DollarSign, Clock, Truck } from "lucide-react-native";
+import { MapPin, Phone, Banknote, Clock, Truck } from "lucide-react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -19,8 +19,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { api } from "@/lib/api";
 import { Order } from "@/lib/types";
-import { Spacing, BorderRadius } from "@/constants/theme";
-import { useOrderSubscription } from "@/hooks/useOrderSubscription";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -32,19 +31,26 @@ export default function OrdersListScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
 
-  // Enable Real-time updates
-  useOrderSubscription();
-
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadOrders = async () => {
     try {
-      // Fetch pending orders (API generic list for now, ideally filter status=pending)
       const data = await api.orders.list();
-      // Filter client side as API returns all
-      setOrders((data as any[]).filter((o: any) => o.status === "pending"));
+      // Map Supabase snake_case to frontend camelCase safely
+      const mappedOrders = (data as any[]).map((o) => ({
+        id: o.id,
+        customerName: o.customer_name || "عميل",
+        customerAddress: o.delivery_address || "بدون عنوان",
+        phonePrimary: o.customer_phone || "-",
+        collectionAmount: Number(o.collection_amount || 0),
+        status: o.status || "pending",
+        createdAt: o.created_at,
+        deliveryWindow: o.delivery_window,
+      })) as Order[];
+
+      setOrders(mappedOrders.filter((o) => o.status === "pending"));
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -69,11 +75,15 @@ export default function OrdersListScreen() {
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-SA", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString("ar-SA", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "--:--";
+    }
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
@@ -82,7 +92,8 @@ export default function OrdersListScreen() {
         styles.orderCard,
         {
           backgroundColor: theme.backgroundDefault,
-          opacity: pressed ? 0.8 : 1,
+          ...Shadows.sm,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
       onPress={() => handleOrderPress(item)}
@@ -110,61 +121,34 @@ export default function OrdersListScreen() {
         <ThemedText
           type="small"
           style={[styles.cardText, { color: theme.textSecondary }]}
-          numberOfLines={2}
+          numberOfLines={1}
         >
           {item.customerAddress}
         </ThemedText>
       </View>
 
-      <View style={styles.cardRow}>
-        <Phone size={16} color={theme.textSecondary} />
-        <ThemedText
-          type="small"
-          style={[styles.cardText, { color: theme.textSecondary }]}
-        >
-          {item.phonePrimary}
-        </ThemedText>
-      </View>
-
-      <View style={styles.cardFooter}>
+      <View style={[styles.cardFooter, { borderTopColor: theme.border }]}>
         <View style={styles.amountContainer}>
-          <DollarSign size={16} color={theme.link} />
-          <ThemedText type="h3" style={{ color: theme.link }}>
-            {item.collectionAmount.toFixed(2)}
+          <Banknote size={16} color={theme.primary} style={{ marginLeft: 4 }} />
+          <ThemedText type="h4" style={{ color: theme.primary }}>
+            {(item.collectionAmount || 0).toFixed(2)} ر.س
           </ThemedText>
         </View>
         <View style={styles.assignButton}>
-          <Truck size={16} color={theme.link} />
+          <Truck size={18} color={theme.primary} />
           <ThemedText
             type="small"
             style={{
-              color: theme.link,
-              marginRight: Spacing.xs,
-              fontWeight: "600",
+              color: theme.primary,
+              marginRight: 4,
+              fontWeight: "700",
             }}
           >
-            تعيين
+            تعيين سائق
           </ThemedText>
         </View>
       </View>
     </Pressable>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <ThemedText
-        type="h3"
-        style={{ textAlign: "center", marginBottom: Spacing.sm }}
-      >
-        لا توجد طلبات معلقة
-      </ThemedText>
-      <ThemedText
-        type="small"
-        style={{ color: theme.textSecondary, textAlign: "center" }}
-      >
-        تم تعيين جميع الطلبات للسائقين
-      </ThemedText>
-    </View>
   );
 
   return (
@@ -178,78 +162,67 @@ export default function OrdersListScreen() {
             paddingBottom: tabBarHeight + Spacing.xl,
           },
         ]}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={orders}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderOrderCard}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
         }
-        ListEmptyComponent={loading ? null : renderEmptyState}
+        ListEmptyComponent={
+          loading ? null : (
+            <View style={styles.emptyState}>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>
+                لا توجد طلبات معلقة حالياً
+              </ThemedText>
+            </View>
+          )
+        }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        showsVerticalScrollIndicator={false}
       />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-  },
-  orderCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-  },
+  container: { flex: 1 },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: Spacing.lg },
+  orderCard: { padding: Spacing.lg, borderRadius: BorderRadius.md },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: Spacing.md,
   },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: Spacing.xs,
-  },
+  timeRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
   cardRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginBottom: Spacing.sm,
   },
-  cardText: {
-    marginLeft: Spacing.sm,
-    flex: 1,
-  },
+  cardText: { marginRight: Spacing.sm, flex: 1, color: "#64748B" },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: Spacing.sm,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
   },
-  amountContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  amountContainer: { flexDirection: "row", alignItems: "center" },
   assignButton: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#2563EB15",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
-  separator: {
-    height: Spacing.md,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: Spacing["4xl"],
-  },
+  separator: { height: Spacing.md },
+  emptyState: { flex: 1, alignItems: "center", paddingTop: 100 },
 });

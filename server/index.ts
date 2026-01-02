@@ -4,6 +4,7 @@ import compression from "compression";
 import type { Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
+import { registerAnalyticsRoutes } from "./analyticsRoutes";
 import * as fs from "fs";
 import * as path from "path";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -27,7 +28,6 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
 
 declare module "http" {
   interface IncomingMessage {
@@ -66,7 +66,10 @@ function setupCors(app: express.Application) {
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       );
-      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-user-id");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, x-user-id",
+      );
       res.header("Access-Control-Allow-Credentials", "true");
     }
 
@@ -77,7 +80,6 @@ function setupCors(app: express.Application) {
     next();
   });
 }
-
 
 function setupBodyParsing(app: express.Application) {
   app.use(
@@ -291,6 +293,9 @@ function setupErrorHandler(app: express.Application) {
   configureExpoAndLanding(app);
 
   const server = await registerRoutes(app);
+
+  // Register analytics routes
+  registerAnalyticsRoutes(app);
 
   setupErrorHandler(app);
 

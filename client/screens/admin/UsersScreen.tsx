@@ -10,14 +10,22 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { Phone, Mail } from "lucide-react-native";
+import {
+  Phone,
+  Mail,
+  User,
+  Shield,
+  Briefcase,
+  Truck,
+  Utensils,
+} from "lucide-react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { api } from "@/lib/api";
 import { Profile, UserRole } from "@/lib/types";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -42,10 +50,17 @@ export default function UsersScreen() {
 
   const loadUsers = async () => {
     try {
-      // If API supports filtering by role:
       const roleFilter = filter === "all" ? undefined : filter;
       const data = await api.users.list(roleFilter);
-      setUsers(data as any);
+      // Safely map Supabase fields
+      const mappedUsers = (data as any[]).map((u) => ({
+        id: u.id,
+        fullName: u.full_name || "مستخدم",
+        role: u.role,
+        email: u.email,
+        phoneNumber: u.phone_number || "-",
+      })) as Profile[];
+      setUsers(mappedUsers);
     } catch (error) {
       console.error("Failed to load users", error);
     }
@@ -61,105 +76,100 @@ export default function UsersScreen() {
     setRefreshing(false);
   };
 
-  const getRoleColor = (role: string) => {
-    const colors: Record<string, string> = {
-      admin: "#EF4444",
-      dispatcher: "#3B82F6",
-      restaurant: "#F97316",
-      driver: "#10B981",
-    };
-    return colors[role] || theme.link;
+  const getRoleInfo = (role: string) => {
+    switch (role) {
+      case "admin":
+        return {
+          color: "#EF4444",
+          label: "مدير",
+          icon: <Shield size={16} color="#EF4444" />,
+        };
+      case "dispatcher":
+        return {
+          color: theme.primary,
+          label: "مُنسق",
+          icon: <Briefcase size={16} color={theme.primary} />,
+        };
+      case "restaurant":
+        return {
+          color: "#F59E0B",
+          label: "مطعم",
+          icon: <Utensils size={16} color="#F59E0B" />,
+        };
+      case "driver":
+        return {
+          color: "#10B981",
+          label: "سائق",
+          icon: <Truck size={16} color="#10B981" />,
+        };
+      default:
+        return {
+          color: theme.textSecondary,
+          label: role,
+          icon: <User size={16} color={theme.textSecondary} />,
+        };
+    }
   };
 
-  const getRoleLabel = (role: string) => {
-    const labels: Record<string, string> = {
-      admin: "مدير",
-      dispatcher: "مُنسق",
-      restaurant: "مطعم",
-      driver: "سائق",
-    };
-    return labels[role] || role;
-  };
-
-  const renderUserCard = ({ item }: { item: Profile }) => (
-    <View
-      style={[styles.userCard, { backgroundColor: theme.backgroundDefault }]}
-    >
-      <View style={styles.cardHeader}>
-        <View
-          style={[styles.avatar, { backgroundColor: getRoleColor(item.role) }]}
-        >
-          <ThemedText type="h4" style={{ color: "#FFFFFF" }}>
-            {item.fullName.charAt(0).toUpperCase()}
-          </ThemedText>
-        </View>
-        <View style={{ flex: 1 }}>
-          <ThemedText type="h3">{item.fullName}</ThemedText>
+  const renderUserCard = ({ item }: { item: Profile }) => {
+    const roleInfo = getRoleInfo(item.role);
+    return (
+      <View
+        style={[
+          styles.userCard,
+          { backgroundColor: theme.backgroundDefault, ...Shadows.sm },
+        ]}
+      >
+        <View style={styles.cardHeader}>
           <View
-            style={[
-              styles.roleBadge,
-              { backgroundColor: `${getRoleColor(item.role)}20` },
-            ]}
+            style={[styles.avatar, { backgroundColor: roleInfo.color + "15" }]}
           >
-            <ThemedText
-              type="caption"
-              style={{ color: getRoleColor(item.role), fontWeight: "600" }}
+            <ThemedText type="h3" style={{ color: roleInfo.color }}>
+              {(item.fullName || "U").charAt(0).toUpperCase()}
+            </ThemedText>
+          </View>
+          <View style={{ flex: 1, marginRight: Spacing.md }}>
+            <ThemedText type="h3">{item.fullName}</ThemedText>
+            <View
+              style={[
+                styles.roleBadge,
+                { backgroundColor: roleInfo.color + "10" },
+              ]}
             >
-              {getRoleLabel(item.role)}
+              {roleInfo.icon}
+              <ThemedText
+                type="caption"
+                style={{
+                  color: roleInfo.color,
+                  fontWeight: "700",
+                  marginRight: 4,
+                }}
+              >
+                {roleInfo.label}
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+            <Mail size={14} color={theme.textSecondary} />
+            <ThemedText type="small" style={styles.detailText}>
+              {item.email}
+            </ThemedText>
+          </View>
+          <View style={styles.detailRow}>
+            <Phone size={14} color={theme.textSecondary} />
+            <ThemedText type="small" style={styles.detailText}>
+              {item.phoneNumber}
             </ThemedText>
           </View>
         </View>
       </View>
-
-      <View style={styles.detailRow}>
-        <Mail size={16} color={theme.textSecondary} />
-        <ThemedText
-          type="small"
-          style={{ color: theme.textSecondary, marginRight: Spacing.sm }}
-        >
-          {item.email}
-        </ThemedText>
-      </View>
-
-      <View style={styles.detailRow}>
-        <Phone size={16} color={theme.textSecondary} />
-        <ThemedText
-          type="small"
-          style={{ color: theme.textSecondary, marginRight: Spacing.sm }}
-        >
-          {item.phoneNumber}
-        </ThemedText>
-      </View>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View style={styles.filterContainer}>
-      {ROLE_FILTERS.map((option) => (
-        <Pressable
-          key={option.value}
-          style={[
-            styles.filterChip,
-            {
-              backgroundColor:
-                filter === option.value ? theme.link : theme.backgroundDefault,
-            },
-          ]}
-          onPress={() => setFilter(option.value)}
-        >
-          <ThemedText
-            type="caption"
-            style={{
-              color: filter === option.value ? "#FFFFFF" : theme.text,
-              fontWeight: "600",
-            }}
-          >
-            {option.label}
-          </ThemedText>
-        </Pressable>
-      ))}
-    </View>
-  );
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -172,30 +182,56 @@ export default function UsersScreen() {
             paddingBottom: tabBarHeight + Spacing.xl,
           },
         ]}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={users}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
         }
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderUserCard}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={
+          <View style={styles.filterContainer}>
+            {ROLE_FILTERS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor:
+                      filter === option.value
+                        ? theme.primary
+                        : theme.backgroundSecondary,
+                  },
+                ]}
+                onPress={() => setFilter(option.value)}
+              >
+                <ThemedText
+                  type="caption"
+                  style={{
+                    color: filter === option.value ? "#FFFFFF" : theme.text,
+                    fontWeight: "700",
+                  }}
+                >
+                  {option.label}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        showsVerticalScrollIndicator={false}
       />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-  },
+  container: { flex: 1 },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: Spacing.lg },
   filterContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -209,7 +245,7 @@ const styles = StyleSheet.create({
   },
   userCard: {
     padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
   },
   cardHeader: {
     flexDirection: "row",
@@ -217,26 +253,38 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: Spacing.md,
   },
   roleBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     alignSelf: "flex-start",
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    marginTop: Spacing.xs,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.xs,
+    marginTop: 6,
+    gap: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginBottom: Spacing.md,
+  },
+  detailsContainer: {
+    gap: Spacing.xs,
   },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
   },
-  separator: {
-    height: Spacing.md,
+  detailText: {
+    color: "#64748B",
+    flex: 1,
   },
+  separator: { height: Spacing.md },
 });

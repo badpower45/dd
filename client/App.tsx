@@ -8,11 +8,17 @@ import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/lib/query-keys";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Import global CSS for NativeWind
+import "./global.css";
+
+// Initialize i18n
+import "./i18n";
 
 const linking = {
   prefixes: [Linking.createURL ? Linking.createURL("/") : "/"],

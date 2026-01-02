@@ -6,6 +6,7 @@ import { BlurView } from "expo-blur";
 
 import MyTasksScreen from "@/screens/driver/MyTasksScreen";
 import WalletScreen from "@/screens/driver/WalletScreen";
+import LeaderboardScreen from "@/screens/driver/LeaderboardScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { HeaderTitle } from "@/components/HeaderTitle";
@@ -13,6 +14,7 @@ import { HeaderTitle } from "@/components/HeaderTitle";
 export type DriverTabParamList = {
   TasksTab: undefined;
   WalletTab: undefined;
+  LeaderboardTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -67,6 +69,17 @@ export default function DriverNavigator() {
           headerTitle: "محفظتي",
           tabBarIcon: ({ color, size }) => (
             <Feather name="credit-card" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="LeaderboardTab"
+        component={LeaderboardScreen}
+        options={{
+          title: "الصدارة",
+          headerTitle: "لوحة الصدارة",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="award" size={size} color={color} />
           ),
         }}
       />

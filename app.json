@@ -72,7 +72,9 @@
     "extra": {
       "eas": {
         "projectId": "17aeeb62-a7d6-4b2a-8b07-aabad959edf4"
-      }
+      },
+      "EXPO_PUBLIC_SUPABASE_URL": "https://iytmpebytpzjaotznngt.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dG1wZWJ5dHB6amFvdHpubmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyOTIxMTMsImV4cCI6MjA4MTg2ODExM30.ou992IccgxCs8g4uCXZe2Xt8eTOd_1-cPcGYQPp_cqg"
     },
     "owner": "bodeelezabys-organization"
   }

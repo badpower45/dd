@@ -7,6 +7,10 @@ import { BlurView } from "expo-blur";
 import DashboardScreen from "@/screens/admin/DashboardScreen";
 import AllOrdersScreen from "@/screens/admin/AllOrdersScreen";
 import UsersScreen from "@/screens/admin/UsersScreen";
+import AnalyticsScreen from "@/screens/admin/AnalyticsScreen";
+import CustomerInsightsScreen from "@/screens/admin/CustomerInsightsScreen";
+import SystemSettingsScreen from "@/screens/admin/SystemSettingsScreen";
+import NotificationsScreen from "@/screens/NotificationsScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { HeaderTitle } from "@/components/HeaderTitle";
@@ -15,6 +19,10 @@ export type AdminTabParamList = {
   DashboardTab: undefined;
   OrdersTab: undefined;
   UsersTab: undefined;
+  AnalyticsTab: undefined;
+  CustomersTab: undefined;
+  NotificationsTab: undefined;
+  SettingsTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -80,6 +88,50 @@ export default function AdminNavigator() {
           headerTitle: "إدارة المستخدمين",
           tabBarIcon: ({ color, size }) => (
             <Feather name="users" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AnalyticsTab"
+        component={AnalyticsScreen}
+        options={{
+          title: "التحليلات",
+          headerTitle: "التحليلات",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="trending-up" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="CustomersTab"
+        component={CustomerInsightsScreen}
+        options={{
+          title: "العملاء",
+          headerTitle: "رؤى العملاء",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="users" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="NotificationsTab"
+        component={NotificationsScreen}
+        options={{
+          title: "الإشعارات",
+          headerTitle: "الإشعارات",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="bell" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="SettingsTab"
+        component={SystemSettingsScreen}
+        options={{
+          title: "الإعدادات",
+          headerTitle: "إعدادات النظام",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="settings" size={size} color={color} />
           ),
         }}
       />

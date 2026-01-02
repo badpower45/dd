@@ -96,7 +96,7 @@ export class DatabaseStorage implements IStorage {
           .from(users)
           .where(eq(users.role, role as any));
       },
-      CacheTTL.MEDIUM // 60 seconds
+      CacheTTL.MEDIUM, // 60 seconds
     );
   }
 
@@ -107,7 +107,7 @@ export class DatabaseStorage implements IStorage {
       async () => {
         return await db.select().from(users).where(eq(users.role, "driver"));
       },
-      CacheTTL.SHORT // 30 seconds
+      CacheTTL.SHORT, // 30 seconds
     );
   }
 
@@ -118,7 +118,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<User> {
     const [user] = await db
       .update(users)
-      .set({ currentLat: lat, currentLng: lng })
+      .set({ current_lat: lat, current_lng: lng })
       .where(eq(users.id, id))
       .returning();
     return user;
@@ -142,21 +142,21 @@ export class DatabaseStorage implements IStorage {
     // Business Logic: Delivery Completion
     if (updates.status === "delivered" && order.status !== "delivered") {
       const now = new Date();
-      updates.deliveredAt = now;
+      updates.delivered_at = now;
 
       // Transaction Logic
       await db.transaction(async (tx) => {
         // 1. Add delivery fee to Driver's balance
-        if (order.driverId) {
+        if (order.driver_id) {
           // Atomic update using sql increment
           await tx
             .update(users)
-            .set({ balance: sql`${users.balance} + ${order.deliveryFee}` })
-            .where(eq(users.id, order.driverId));
+            .set({ balance: sql`${users.balance} + ${order.delivery_fee}` })
+            .where(eq(users.id, order.driver_id));
 
           await tx.insert(transactions).values({
-            userId: order.driverId,
-            amount: order.deliveryFee,
+            user_id: order.driver_id,
+            amount: order.delivery_fee,
             type: "commission",
             description: `Delivery fee for order #${id}`,
           });
@@ -166,12 +166,12 @@ export class DatabaseStorage implements IStorage {
         // Restaurant gets: Collection Amount (assuming full collection is credited)
         await tx
           .update(users)
-          .set({ balance: sql`${users.balance} + ${order.collectionAmount}` })
-          .where(eq(users.id, order.restaurantId));
+          .set({ balance: sql`${users.balance} + ${order.collection_amount}` })
+          .where(eq(users.id, order.restaurant_id));
 
         await tx.insert(transactions).values({
-          userId: order.restaurantId,
-          amount: order.collectionAmount,
+          user_id: order.restaurant_id,
+          amount: order.collection_amount,
           type: "payment",
           description: `Collection for order #${id}`,
         });
@@ -179,8 +179,8 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Status Logic for timestamps
-    if (updates.status === "picked_up" && !order.pickedAt) {
-      updates.pickedAt = new Date();
+    if (updates.status === "picked_up" && !order.picked_at) {
+      updates.picked_at = new Date();
     }
 
     // Cancellation Logic
@@ -205,7 +205,7 @@ export class DatabaseStorage implements IStorage {
       // "Cancellation Logic: System processes 'delivery' financially, but what happens if cancelled? Determine if fee is returned... recording in transactions."
 
       // Let's add a transaction entry for "Cancellation" just for record keeping if driver was assigned.
-      if (order.driverId) {
+      if (order.driver_id) {
         // Maybe pay driver a small "Show up" fee if they picked it up?
         // Only if picked_up.
         if (order.status === "picked_up") {
@@ -217,16 +217,16 @@ export class DatabaseStorage implements IStorage {
 
     const [updatedOrder] = await db
       .update(orders)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...updates, updated_at: new Date() })
       .where(eq(orders.id, id))
       .returning();
 
     // Notification Logic
-    if (updates.status === "assigned" && updates.driverId) {
-      const driver = await this.getUser(updates.driverId);
-      if (driver?.pushToken) {
+    if (updates.status === "assigned" && updates.driver_id) {
+      const driver = await this.getUser(updates.driver_id);
+      if (driver?.push_token) {
         await sendPushNotification(
-          driver.pushToken,
+          driver.push_token,
           "طلب جديد",
           "تم تعيين طلب جديد لك #" + id,
         );
@@ -239,7 +239,7 @@ export class DatabaseStorage implements IStorage {
   async updateUserPushToken(id: number, token: string): Promise<User> {
     const [user] = await db
       .update(users)
-      .set({ pushToken: token })
+      .set({ push_token: token })
       .where(eq(users.id, id))
       .returning();
     return user;
@@ -255,7 +255,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-
   async getDailyStats(
     date: Date,
   ): Promise<{ collections: number; commissions: number }> {
@@ -266,8 +265,8 @@ export class DatabaseStorage implements IStorage {
 
     const allTx = await db.select().from(transactions);
     const todayTx = allTx.filter((t) => {
-      if (!t.createdAt) return false;
-      const d = new Date(t.createdAt);
+      if (!t.created_at) return false;
+      const d = new Date(t.created_at);
       return d >= startOfDay && d <= endOfDay;
     });
 
@@ -286,11 +285,11 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(orders)
-      .where(eq(orders.restaurantId, restaurantId));
+      .where(eq(orders.restaurant_id, restaurantId));
   }
 
   async getOrdersByDriver(driverId: number): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.driverId, driverId));
+    return await db.select().from(orders).where(eq(orders.driver_id, driverId));
   }
 
   async getAllOrders(filters?: {
@@ -302,10 +301,10 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
 
     if (filters?.restaurantId) {
-      conditions.push(eq(orders.restaurantId, filters.restaurantId));
+      conditions.push(eq(orders.restaurant_id, filters.restaurantId));
     }
     if (filters?.driverId) {
-      conditions.push(eq(orders.driverId, filters.driverId));
+      conditions.push(eq(orders.driver_id, filters.driverId));
     }
     if (filters?.status) {
       conditions.push(eq(orders.status, filters.status as any));
@@ -316,7 +315,10 @@ export class DatabaseStorage implements IStorage {
       const endOfDay = new Date(filters.date);
       endOfDay.setHours(23, 59, 59, 999);
       conditions.push(
-        and(gte(orders.createdAt, startOfDay), lte(orders.createdAt, endOfDay)),
+        and(
+          gte(orders.created_at, startOfDay),
+          lte(orders.created_at, endOfDay),
+        ),
       );
     }
 
@@ -335,7 +337,7 @@ export class DatabaseStorage implements IStorage {
       return await db
         .select()
         .from(transactions)
-        .where(eq(transactions.userId, userId));
+        .where(eq(transactions.user_id, userId));
     }
     return await db.select().from(transactions);
   }
@@ -365,21 +367,21 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(
         and(
-          eq(orders.restaurantId, restaurantId),
-          gte(orders.createdAt, startOfDay),
-          lte(orders.createdAt, endOfDay),
+          eq(orders.restaurant_id, restaurantId),
+          gte(orders.created_at, startOfDay),
+          lte(orders.created_at, endOfDay),
         ),
       );
 
     const collections = await db
-      .select({ total: sql<number>`sum(${orders.collectionAmount})` })
+      .select({ total: sql<number>`sum(${orders.collection_amount})` })
       .from(orders)
       .where(
         and(
-          eq(orders.restaurantId, restaurantId),
+          eq(orders.restaurant_id, restaurantId),
           eq(orders.status, "delivered"),
-          gte(orders.createdAt, startOfDay),
-          lte(orders.createdAt, endOfDay),
+          gte(orders.created_at, startOfDay),
+          lte(orders.created_at, endOfDay),
         ),
       );
 
@@ -388,7 +390,7 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(
         and(
-          eq(orders.restaurantId, restaurantId),
+          eq(orders.restaurant_id, restaurantId),
           or(
             eq(orders.status, "pending"),
             eq(orders.status, "assigned"),
@@ -408,8 +410,8 @@ export class DatabaseStorage implements IStorage {
     const [order] = await db
       .select()
       .from(orders)
-      .where(eq(orders.customerPhone, phone))
-      .orderBy(sql`${orders.createdAt} DESC`)
+      .where(eq(orders.customer_phone, phone))
+      .orderBy(sql`${orders.created_at} DESC`)
       .limit(1);
     return order;
   }
@@ -421,7 +423,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDriverRatings(driverId: number): Promise<Rating[]> {
-    return await db.select().from(ratings).where(eq(ratings.driverId, driverId));
+    return await db
+      .select()
+      .from(ratings)
+      .where(eq(ratings.driver_id, driverId));
   }
 }
 

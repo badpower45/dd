@@ -70,7 +70,11 @@ export function Button({
     }
   };
 
-  const getVariantStyles = (): { bg: string; text: string; border?: string } => {
+  const getVariantStyles = (): {
+    bg: string;
+    text: string;
+    border?: string;
+  } => {
     switch (variant) {
       case "secondary":
         return {
@@ -156,4 +160,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

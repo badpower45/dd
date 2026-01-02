@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView, RefreshControl, I18nManager } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  I18nManager,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
@@ -75,12 +81,15 @@ export default function DashboardScreen() {
           <ThemedText type="small" style={{ color: theme.textSecondary }}>
             مرحباً 👋
           </ThemedText>
-          <ThemedText type="h2">{user?.fullName || "المطعم"}</ThemedText>
+          <ThemedText type="h2">{user?.full_name || "المطعم"}</ThemedText>
         </View>
       </Animated.View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + Spacing["4xl"] }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: tabBarHeight + Spacing["4xl"] },
+        ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -119,7 +128,9 @@ export default function DashboardScreen() {
         {/* Quick Actions */}
         <Animated.View entering={FadeInUp.duration(400).delay(400)}>
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: theme.primary }]} />
+            <View
+              style={[styles.sectionDot, { backgroundColor: theme.primary }]}
+            />
             <ThemedText type="h4">الإجراءات السريعة</ThemedText>
           </View>
         </Animated.View>

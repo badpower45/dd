@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   FlatList,
@@ -12,11 +12,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   MapPin,
   Phone,
-  DollarSign,
+  Banknote,
   Clock,
   Package,
   CheckCircle,
@@ -24,19 +24,16 @@ import {
   Radio,
 } from "lucide-react-native";
 import * as Linking from "expo-linking";
-import * as Location from "expo-location";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { Order, OrderStatus } from "@/lib/types";
-import { Spacing, BorderRadius } from "@/constants/theme";
-import { calculateDistance, calculateETA } from "@/lib/location";
-// Actually, let's just mock the function if package missing.
+import { useDriverOnline } from "@/hooks/useDriverOnline";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -45,7 +42,6 @@ export default function MyTasksScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
-  const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const { user } = useAuth();
 
@@ -53,235 +49,147 @@ export default function MyTasksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"active" | "completed">("active");
-  const [isOnline, setIsOnline] = useState(false);
-  const locationSubscription = useRef<Location.LocationSubscription | null>(
-    null,
-  );
-  const onlineIntentRef = useRef<boolean>(false);
 
-  const loadOrders = async () => {
-    if (!user) return;
+  const { isOnline, isRequesting, toggleOnline } = useDriverOnline(
+    async (lat, lng) => {
+      if (!user) return;
+      await api.drivers.updateLocation(user.id, lat, lng);
+    },
+    { timeInterval: 10000, distanceInterval: 40 },
+  );
+
+  const handleToggleOnline = useCallback(
+    async (value: boolean) => {
+      if (!user) {
+        Alert.alert("تنبيه", "تسجيل الدخول مطلوب لتفعيل التتبع");
+        return;
+      }
+      await toggleOnline(value);
+    },
+    [toggleOnline, user],
+  );
+
+  const loadOrders = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     try {
       const data = await api.orders.list({ driverId: user.id });
-      setOrders(data as any);
+      const mappedOrders: Order[] = (data as any[]).map((o) => ({
+        id: o.id,
+        createdAt: o.created_at,
+        restaurantId: o.restaurant_id,
+        driverId: o.driver_id,
+        customerName: o.customer_name || "عميل",
+        customerAddress: o.delivery_address || "بدون عنوان",
+        customerGeo:
+          o.delivery_lat && o.delivery_lng
+            ? { lat: Number(o.delivery_lat), lng: Number(o.delivery_lng) }
+            : null,
+        phonePrimary: o.customer_phone || "-",
+        phoneSecondary: null,
+        collectionAmount: Number(o.collection_amount || 0),
+        deliveryFee: Number(o.delivery_fee || 0),
+        status: o.status,
+        deliveryWindow: o.delivery_window,
+        restaurant: undefined,
+        driver: undefined,
+      }));
+      setOrders(mappedOrders);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
       loadOrders();
-    }, [user]),
+    }, [loadOrders]),
   );
-
-  const stopLocationTracking = () => {
-    if (locationSubscription.current) {
-      locationSubscription.current.remove();
-      locationSubscription.current = null;
-    }
-  };
-
-  const handleToggleOnline = async (value: boolean) => {
-    if (!user) return;
-
-    onlineIntentRef.current = value;
-
-    if (!value) {
-      stopLocationTracking();
-      setIsOnline(false);
-      // await updateDriverStatus(user.id, "offline"); // TODO: Add API for status update
-      return;
-    }
-
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (!onlineIntentRef.current) return;
-
-    if (status !== "granted") {
-      Alert.alert("تم رفض الإذن", "إذن الموقع مطلوب للاتصال بالإنترنت");
-      setIsOnline(false);
-      return;
-    }
-
-    try {
-      const subscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 10000,
-          distanceInterval: 50,
-        },
-        (location) => {
-          if (user && onlineIntentRef.current) {
-            api.drivers
-              .updateLocation(
-                user.id,
-                location.coords.latitude,
-                location.coords.longitude,
-              )
-              .catch((err) => console.error("Loc update failed", err));
-          }
-        },
-      );
-
-      if (!onlineIntentRef.current) {
-        subscription.remove();
-        return;
-      }
-
-      locationSubscription.current = subscription;
-      setIsOnline(true);
-
-      // We assume location update marks them explicitly or implicitly active
-
-      if (!onlineIntentRef.current) return;
-
-      // await notifyDriverLocationUpdate(); // API handles this via Realtime/Websockets
-    } catch (error) {
-      console.error("Failed to start location tracking:", error);
-      stopLocationTracking();
-      setIsOnline(false);
-      Alert.alert("خطأ", "فشل بدء تتبع الموقع");
-    }
-  };
 
   useEffect(() => {
     return () => {
-      stopLocationTracking();
+      toggleOnline(false);
     };
-  }, []);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadOrders();
-    setRefreshing(false);
-  };
+  }, [toggleOnline]);
 
   const handleUpdateStatus = async (
     orderId: number,
     newStatus: OrderStatus,
   ) => {
     try {
-      if (newStatus === "delivered") {
-        // Mock Proof of Delivery flow
-        Alert.alert("إثبات التوصيل", "هل تريد التقاط صورة للإثبات؟ (محاكاة)", [
-          {
-            text: "تخطي",
-            onPress: () => submitStatusUpdate(orderId, newStatus, null),
-          },
-          {
-            text: "رفع صورة (محاكاة)",
-            onPress: () =>
-              submitStatusUpdate(
-                orderId,
-                newStatus,
-                "https://placehold.co/600x400/png",
-              ),
-          },
-        ]);
-      } else {
-        await submitStatusUpdate(orderId, newStatus, null);
-      }
-    } catch (error) {
-      Alert.alert("خطأ", "فشل تحديث حالة الطلب");
-    }
-  };
-
-  const submitStatusUpdate = async (
-    orderId: number,
-    status: OrderStatus,
-    proofUrl: string | null,
-  ) => {
-    try {
-      await api.orders.update(orderId, { status, proofImageUrl: proofUrl });
+      await api.orders.update(orderId, { status: newStatus });
       await loadOrders();
-      Alert.alert(
-        "تم بنجاح",
-        status === "picked_up"
-          ? "تم تحديد الطلب كمستلم"
-          : "تم توصيل الطلب بنجاح!",
-      );
+      Alert.alert("نجاح", "تم تحديث حالة الطلب");
     } catch (error) {
-      console.error(error);
-      Alert.alert("خطأ", "فشل التحديث");
+      Alert.alert("خطأ", "فشل تحديث الحالة");
     }
   };
 
   const handleOpenMaps = (order: Order) => {
-    if (order.customerGeo) {
-      const url = `https://maps.google.com/?q=${order.customerGeo.lat},${order.customerGeo.lng}`;
-      Linking.openURL(url);
-    } else {
-      const encoded = encodeURIComponent(order.customerAddress);
-      Linking.openURL(`https://maps.google.com/?q=${encoded}`);
-    }
+    const url = order.customerGeo
+      ? `https://www.google.com/maps/search/?api=1&query=${order.customerGeo.lat},${order.customerGeo.lng}`
+      : `https://maps.google.com/?q=${encodeURIComponent(order.customerAddress)}`;
+    Linking.openURL(url);
   };
 
   const filteredOrders = orders.filter((order) => {
-    if (filter === "active") {
+    if (filter === "active")
       return order.status === "assigned" || order.status === "picked_up";
-    }
     return order.status === "delivered";
   });
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadOrders();
+    setRefreshing(false);
+  }, [loadOrders]);
+
   const renderOrderCard = ({ item }: { item: Order }) => (
     <View
-      style={[styles.orderCard, { backgroundColor: theme.backgroundDefault }]}
+      style={[
+        styles.orderCard,
+        { backgroundColor: theme.backgroundDefault, ...Shadows.sm },
+      ]}
     >
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
-          <ThemedText type="h3" numberOfLines={1}>
-            {item.customerName}
-          </ThemedText>
-          {item.deliveryWindow ? (
+          <ThemedText type="h3">{item.customerName}</ThemedText>
+          {item.deliveryWindow && (
             <View style={styles.timeRow}>
               <Clock size={14} color={theme.textSecondary} />
               <ThemedText
                 type="caption"
-                style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}
+                style={{ color: theme.textSecondary, marginRight: 4 }}
               >
                 {item.deliveryWindow}
               </ThemedText>
             </View>
-          ) : null}
+          )}
         </View>
         <StatusBadge status={item.status} />
       </View>
 
       <View style={styles.cardRow}>
         <MapPin size={16} color={theme.textSecondary} />
-        <ThemedText
-          type="small"
-          style={[styles.cardText, { color: theme.textSecondary }]}
-          numberOfLines={2}
-        >
+        <ThemedText type="small" style={styles.cardText} numberOfLines={2}>
           {item.customerAddress}
         </ThemedText>
       </View>
 
-      <View style={styles.cardRow}>
-        <Phone size={16} color={theme.textSecondary} />
-        <Pressable onPress={() => Linking.openURL(`tel:${item.phonePrimary}`)}>
-          <ThemedText
-            type="small"
-            style={{ color: theme.link, marginLeft: Spacing.sm }}
-          >
-            {item.phonePrimary}
-          </ThemedText>
-        </Pressable>
-      </View>
-
       <View style={styles.cardFooter}>
         <View style={styles.amountContainer}>
-          <DollarSign size={20} color={theme.link} />
-          <ThemedText type="h2" style={{ color: theme.link }}>
-            {item.collectionAmount.toFixed(2)}
+          <Banknote size={20} color={theme.primary} style={{ marginLeft: 4 }} />
+          <ThemedText type="h2" style={{ color: theme.primary }}>
+            {(item.collectionAmount || 0).toFixed(2)} ر.س
           </ThemedText>
         </View>
       </View>
 
-      {filter === "active" ? (
+      {filter === "active" && (
         <View style={styles.actionsContainer}>
           <Pressable
             style={[
@@ -290,75 +198,48 @@ export default function MyTasksScreen() {
             ]}
             onPress={() => handleOpenMaps(item)}
           >
-            <Navigation size={18} color={theme.link} />
+            <Navigation size={18} color={theme.primary} />
             <ThemedText
               type="small"
               style={{
-                color: theme.link,
-                marginRight: Spacing.xs,
-                fontWeight: "600",
+                color: theme.primary,
+                fontWeight: "700",
+                marginRight: 4,
               }}
             >
-              الملاحة
+              خرائط
             </ThemedText>
           </Pressable>
 
           {item.status === "assigned" ? (
             <Pressable
-              style={[styles.actionButton, { backgroundColor: "#F9731620" }]}
+              style={[styles.actionButton, { backgroundColor: "#F9731615" }]}
               onPress={() => handleUpdateStatus(item.id, "picked_up")}
             >
               <Package size={18} color="#F97316" />
               <ThemedText
                 type="small"
-                style={{
-                  color: "#F97316",
-                  marginRight: Spacing.xs,
-                  fontWeight: "600",
-                }}
+                style={{ color: "#F97316", fontWeight: "700", marginRight: 4 }}
               >
                 استلام
               </ThemedText>
             </Pressable>
           ) : (
             <Pressable
-              style={[styles.actionButton, { backgroundColor: "#10B98120" }]}
+              style={[styles.actionButton, { backgroundColor: "#10B98115" }]}
               onPress={() => handleUpdateStatus(item.id, "delivered")}
             >
               <CheckCircle size={18} color="#10B981" />
               <ThemedText
                 type="small"
-                style={{
-                  color: "#10B981",
-                  marginRight: Spacing.xs,
-                  fontWeight: "600",
-                }}
+                style={{ color: "#10B981", fontWeight: "700", marginRight: 4 }}
               >
-                تم التوصيل
+                توصيل
               </ThemedText>
             </Pressable>
           )}
         </View>
-      ) : null}
-    </View>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <ThemedText
-        type="h3"
-        style={{ textAlign: "center", marginBottom: Spacing.sm }}
-      >
-        {filter === "active" ? "لا توجد مهام نشطة" : "لا توجد مهام مكتملة"}
-      </ThemedText>
-      <ThemedText
-        type="small"
-        style={{ color: theme.textSecondary, textAlign: "center" }}
-      >
-        {filter === "active"
-          ? "ليس لديك أي طلبات معينة الآن"
-          : "لم تكمل أي توصيلات بعد"}
-      </ThemedText>
+      )}
     </View>
   );
 
@@ -367,76 +248,67 @@ export default function MyTasksScreen() {
       <View
         style={[
           styles.filterContainer,
-          {
-            paddingTop: headerHeight + Spacing.lg,
-            backgroundColor: theme.backgroundRoot,
-          },
+          { paddingTop: headerHeight + Spacing.lg },
         ]}
       >
         <View
           style={[
-            styles.onlineToggleContainer,
-            { backgroundColor: theme.backgroundDefault },
+            styles.onlineToggle,
+            { backgroundColor: theme.backgroundDefault, ...Shadows.sm },
           ]}
         >
-          <View style={styles.onlineToggleLeft}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Radio
               size={20}
               color={isOnline ? "#10B981" : theme.textSecondary}
             />
-            <ThemedText
-              type="body"
-              style={{ marginRight: Spacing.sm, fontWeight: "600" }}
-            >
-              {isOnline ? "متصل" : "غير متصل"}
+            <ThemedText type="h4" style={{ marginRight: 8 }}>
+              {isOnline
+                ? "أنت الآن متاح"
+                : isRequesting
+                  ? "جارِ التفعيل..."
+                  : "أنت الآن غير متصل"}
             </ThemedText>
           </View>
           <Switch
             value={isOnline}
             onValueChange={handleToggleOnline}
-            trackColor={{ false: theme.border, true: "#10B98150" }}
-            thumbColor={isOnline ? "#10B981" : theme.textSecondary}
+            trackColor={{ true: "#10B981" }}
+            disabled={isRequesting}
           />
         </View>
 
-        <View
-          style={[
-            styles.filterTabs,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
+        <View style={styles.tabs}>
           <Pressable
             style={[
-              styles.filterTab,
-              filter === "active" && { backgroundColor: theme.link },
+              styles.tab,
+              filter === "active" && { backgroundColor: theme.primary },
             ]}
             onPress={() => setFilter("active")}
           >
             <ThemedText
-              type="small"
               style={{
-                color: filter === "active" ? "#FFFFFF" : theme.text,
-                fontWeight: "600",
+                color: filter === "active" ? "#FFF" : theme.text,
+                fontWeight: "700",
               }}
             >
-              نشط
+              المهام الحالية
             </ThemedText>
           </Pressable>
           <Pressable
             style={[
-              styles.filterTab,
-              filter === "completed" && { backgroundColor: theme.link },
+              styles.tab,
+              filter === "completed" && { backgroundColor: theme.primary },
             ]}
             onPress={() => setFilter("completed")}
           >
             <ThemedText
-              type="small"
               style={{
-                color: filter === "completed" ? "#FFFFFF" : theme.text,
-                fontWeight: "600",
+                color: filter === "completed" ? "#FFF" : theme.text,
+                fontWeight: "700",
               }}
             >
-              مكتمل
+              المكتملة
             </ThemedText>
           </Pressable>
         </View>
@@ -444,96 +316,80 @@ export default function MyTasksScreen() {
 
       <FlatList
         style={styles.list}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + Spacing.xl },
-        ]}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        contentContainerStyle={{
+          paddingHorizontal: Spacing.lg,
+          paddingBottom: 100,
+        }}
         data={filteredOrders}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderOrderCard}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
         }
-        ListEmptyComponent={loading ? null : renderEmptyState}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          loading ? null : (
+            <View style={{ paddingTop: 50, alignItems: "center" }}>
+              <ThemedText style={{ color: theme.textSecondary }}>
+                لا توجد طلبات هنا
+              </ThemedText>
+            </View>
+          )
+        }
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
       />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  filterContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-  },
-  onlineToggleContainer: {
+  container: { flex: 1 },
+  filterContainer: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
+  onlineToggle: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.md,
-  },
-  onlineToggleLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  filterTabs: {
-    flexDirection: "row",
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.xs,
-  },
-  filterTab: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    alignItems: "center",
-    borderRadius: BorderRadius.xs,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-  },
-  orderCard: {
     padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+  },
+  tabs: {
+    flexDirection: "row",
+    backgroundColor: "#E2E8F0",
+    borderRadius: BorderRadius.md,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
     borderRadius: BorderRadius.sm,
   },
+  list: { flex: 1 },
+  orderCard: { padding: Spacing.lg, borderRadius: BorderRadius.md },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: Spacing.md,
   },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: Spacing.xs,
-  },
+  timeRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
   cardRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginBottom: Spacing.sm,
   },
-  cardText: {
-    marginLeft: Spacing.sm,
-    flex: 1,
-  },
+  cardText: { marginRight: Spacing.sm, flex: 1, color: "#64748B" },
   cardFooter: {
     marginTop: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
+    borderTopColor: "#F1F5F9",
   },
-  amountContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  amountContainer: { flexDirection: "row", alignItems: "center" },
   actionsContainer: {
     flexDirection: "row",
     marginTop: Spacing.md,
@@ -544,16 +400,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xs,
-  },
-  separator: {
-    height: Spacing.md,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: Spacing["4xl"],
+    paddingVertical: 12,
+    borderRadius: BorderRadius.sm,
   },
 });

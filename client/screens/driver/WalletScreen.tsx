@@ -40,14 +40,23 @@ export default function WalletScreen() {
     if (!user) return;
     try {
       const all = await api.orders.list({ driverId: user.id });
-      const delivered = (all as any[]).filter((o: any) => o.status === "delivered");
+      // Map fields from Supabase snake_case to frontend camelCase safely
+      const mappedOrders = (all as any[]).map((o) => ({
+        id: o.id,
+        customerName: o.customer_name || "عميل",
+        collectionAmount: Number(o.collection_amount || 0),
+        status: o.status,
+        createdAt: o.created_at,
+      })) as Order[];
+
+      const delivered = mappedOrders.filter((o) => o.status === "delivered");
       setAllDeliveries(delivered);
 
       // Filter for today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayOrders = delivered.filter((o: any) => {
-        const orderDate = new Date(o.createdAt || o.created_at);
+      const todayOrders = delivered.filter((o) => {
+        const orderDate = new Date(o.createdAt);
         return orderDate >= today;
       });
       setTodayDeliveries(todayOrders);
@@ -75,21 +84,25 @@ export default function WalletScreen() {
   };
 
   const todayTotal = todayDeliveries.reduce(
-    (sum, order) => sum + order.collectionAmount,
+    (sum, order) => sum + (order.collectionAmount || 0),
     0,
   );
 
   const allTimeTotal = allDeliveries.reduce(
-    (sum, order) => sum + order.collectionAmount,
+    (sum, order) => sum + (order.collectionAmount || 0),
     0,
   );
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("ar-SA", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString("ar-SA", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "--:--";
+    }
   };
 
   const renderDeliveryItem = ({ item }: { item: Order }) => (
@@ -108,7 +121,7 @@ export default function WalletScreen() {
         </ThemedText>
       </View>
       <ThemedText type="h4" style={{ color: theme.link }}>
-        {item.collectionAmount.toFixed(2)} ر.س
+        {(item.collectionAmount || 0).toFixed(2)} ر.س
       </ThemedText>
     </View>
   );
@@ -203,7 +216,9 @@ export default function WalletScreen() {
               {tx.description}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              {new Date(tx.createdAt).toLocaleDateString("ar-SA")}
+              {tx.createdAt
+                ? new Date(tx.createdAt).toLocaleDateString("ar-SA")
+                : ""}
             </ThemedText>
           </View>
           <ThemedText
@@ -216,39 +231,13 @@ export default function WalletScreen() {
             }}
           >
             {tx.type === "withdrawal" || tx.type === "payment" ? "-" : "+"}
-            {tx.amount.toFixed(2)} ر.س
+            {(tx.amount || 0).toFixed(2)} ر.س
           </ThemedText>
         </View>
       ))}
 
       <ThemedText type="h4" style={styles.sectionTitle}>
         توصيلات اليوم
-      </ThemedText>
-    </View>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <DollarSign size={48} color={theme.textSecondary} />
-      <ThemedText
-        type="body"
-        style={{
-          color: theme.textSecondary,
-          textAlign: "center",
-          marginTop: Spacing.md,
-        }}
-      >
-        لم تُكمل أي توصيلات اليوم
-      </ThemedText>
-      <ThemedText
-        type="small"
-        style={{
-          color: theme.textSecondary,
-          textAlign: "center",
-          marginTop: Spacing.xs,
-        }}
-      >
-        أكمل التوصيلات لترى أرباحك هنا
       </ThemedText>
     </View>
   );
@@ -264,45 +253,42 @@ export default function WalletScreen() {
             paddingBottom: tabBarHeight + Spacing.xl,
           },
         ]}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
         data={todayDeliveries}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderDeliveryItem}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={loading ? null : renderEmptyState}
+        ListEmptyComponent={
+          loading ? null : (
+            <View style={styles.emptyState}>
+              <DollarSign size={48} color={theme.textSecondary} />
+              <ThemedText
+                type="body"
+                style={{ color: theme.textSecondary, marginTop: Spacing.md }}
+              >
+                لا توجد توصيلات اليوم
+              </ThemedText>
+            </View>
+          )
+        }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-  },
+  container: { flex: 1 },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: Spacing.lg },
   summaryCard: {
     padding: Spacing.xl,
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.lg,
   },
-  summaryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
+  summaryHeader: { flexDirection: "row", alignItems: "center" },
+  statsRow: { flexDirection: "row", gap: Spacing.md, marginBottom: Spacing.xl },
   statCard: {
     flex: 1,
     padding: Spacing.lg,
@@ -317,9 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: Spacing.sm,
   },
-  sectionTitle: {
-    marginBottom: Spacing.md,
-  },
+  sectionTitle: { marginBottom: Spacing.md },
   deliveryItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -327,14 +311,6 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: BorderRadius.sm,
   },
-  deliveryInfo: {
-    flex: 1,
-  },
-  separator: {
-    height: Spacing.sm,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: Spacing["3xl"],
-  },
+  deliveryInfo: { flex: 1 },
+  emptyState: { alignItems: "center", paddingVertical: Spacing["3xl"] },
 });

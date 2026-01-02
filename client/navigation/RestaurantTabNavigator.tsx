@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Plus } from "lucide-react-native";
 
 import MyOrdersScreen from "@/screens/restaurant/MyOrdersScreen";
@@ -30,7 +29,7 @@ export type RestaurantStackParamList = {
 const Tab = createBottomTabNavigator<RestaurantTabParamList>();
 const Stack = createNativeStackNavigator<RestaurantStackParamList>();
 
-function FloatingActionButton({ onPress, bottomOffset }: { onPress: () => void; bottomOffset: number }) {
+function FloatingActionButton({ onPress }: { onPress: () => void }) {
   const { theme } = useTheme();
 
   return (
@@ -38,7 +37,6 @@ function FloatingActionButton({ onPress, bottomOffset }: { onPress: () => void; 
       style={[
         styles.fab,
         {
-          bottom: bottomOffset,
           backgroundColor: theme.link,
           ...Shadows.lg,
         },
@@ -52,10 +50,6 @@ function FloatingActionButton({ onPress, bottomOffset }: { onPress: () => void; 
 
 function RestaurantTabs({ navigation }: any) {
   const { theme, isDark } = useTheme();
-  const tabBarHeight = useBottomTabBarHeight();
-
-  // Calculate FAB position: tab bar height + spacing
-  const fabBottomOffset = tabBarHeight + Spacing.lg;
 
   return (
     <View style={{ flex: 1 }}>
@@ -71,6 +65,8 @@ function RestaurantTabs({ navigation }: any) {
             }),
             borderTopWidth: 0,
             elevation: 0,
+            height: 60,
+            paddingBottom: Platform.OS === "ios" ? 20 : 10,
           },
           tabBarBackground: () =>
             Platform.OS === "ios" ? (
@@ -121,7 +117,6 @@ function RestaurantTabs({ navigation }: any) {
       </Tab.Navigator>
       <FloatingActionButton
         onPress={() => navigation.navigate("CreateOrder")}
-        bottomOffset={fabBottomOffset}
       />
     </View>
   );
@@ -150,10 +145,12 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: Spacing.lg,
+    bottom: 80, // Fixed bottom offset to avoid useBottomTabBarHeight error
     width: 56,
     height: 56,
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 999,
   },
 });

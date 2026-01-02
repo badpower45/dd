@@ -112,7 +112,9 @@ export default function DashboardScreen() {
 
         {/* Section Header */}
         <View style={styles.sectionHeader}>
-          <View style={[styles.sectionDot, { backgroundColor: theme.primary }]} />
+          <View
+            style={[styles.sectionDot, { backgroundColor: theme.primary }]}
+          />
           <ThemedText type="h4">نظرة عامة على حالة الطلبات</ThemedText>
         </View>
 
@@ -165,11 +167,19 @@ export default function DashboardScreen() {
         >
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
-              <View style={[styles.quickStatIcon, { backgroundColor: `${theme.info}15` }]}>
+              <View
+                style={[
+                  styles.quickStatIcon,
+                  { backgroundColor: `${theme.info}15` },
+                ]}
+              >
                 <Users size={20} color={theme.info} />
               </View>
               <View style={styles.quickStatText}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   السائقون النشطون
                 </ThemedText>
                 <ThemedText type="h4">٣</ThemedText>
@@ -179,11 +189,19 @@ export default function DashboardScreen() {
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <View style={styles.quickStatRow}>
             <View style={styles.quickStatItem}>
-              <View style={[styles.quickStatIcon, { backgroundColor: `${theme.success}15` }]}>
+              <View
+                style={[
+                  styles.quickStatIcon,
+                  { backgroundColor: `${theme.success}15` },
+                ]}
+              >
                 <Package size={20} color={theme.success} />
               </View>
               <View style={styles.quickStatText}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: theme.textSecondary }}
+                >
                   متوسط رسوم التوصيل
                 </ThemedText>
                 <ThemedText type="h4">٥.٠٠ ر.س</ThemedText>
